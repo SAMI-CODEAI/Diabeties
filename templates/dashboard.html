@@ -1,0 +1,10 @@
+{% extends "layout.html" %}
+{% block body %}
+<h3>Dashboard</h3>
+<p>Welcome, {{ user }}</p>
+<ul class="list-unstyled">
+  <li><a class="btn btn-outline-primary" href="{{ url_for('upload') }}">Upload Dataset (CSV)</a></li>
+  <li class="mt-2"><a class="btn btn-outline-success" href="{{ url_for('self_monitor') }}">Self Monitoring (Single)</a></li>
+  <li class="mt-2"><a class="btn btn-outline-info" href="{{ url_for('comparisons') }}">Literature Comparisons</a></li>
+</ul>
+{% endblock %}

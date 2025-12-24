@@ -1,0 +1,273 @@
+{% extends "layout.html" %}
+
+{% block body %}
+<!-- Page Header -->
+<div class="row mb-4">
+  <div class="col-md-8">
+    <h1 class="display-6 fw-bold text-primary">Patient Health Monitor</h1>
+    <p class="text-muted">Analyze your risk using lab reports (PDF) or manual entry.
+      <span class="badge bg-warning text-dark">Beta</span>
+    </p>
+  </div>
+</div>
+
+<!-- Step 1: PDF Upload (Optional) -->
+<div class="card shadow-sm mb-4">
+  <div class="card-header bg-light">
+    <h5 class="mb-0 fw-bold"><i class="bi bi-file-earmark-pdf me-2"></i>Option A: Upload Lab Report (PDF)</h5>
+  </div>
+  <div class="card-body">
+    <form action="{{ url_for('upload_pdf') }}" method="post" enctype="multipart/form-data"
+      class="d-flex align-items-center gap-3">
+      <input type="file" name="pdf_file" class="form-control w-50" accept=".pdf" required>
+      <button type="submit" class="btn btn-outline-primary">
+        <i class="bi bi-magic me-1"></i> Auto-Fill Form
+      </button>
+    </form>
+    <small class="text-muted">We will attempt to extract Glucose, Age, BP, and BMI/Weight.</small>
+  </div>
+</div>
+
+<!-- Step 2: Main Form -->
+<div class="card shadow-sm mb-5">
+  <div class="card-header bg-primary text-white">
+    <h5 class="mb-0 fw-bold"><i class="bi bi-clipboard-data me-2"></i>Option B: Patient Data Form</h5>
+  </div>
+  <div class="card-body">
+
+    <form method="post" action="{{ url_for('self_monitor') }}">
+      <div class="row g-3">
+        <!-- Section: Basic Demographics -->
+        <div class="col-12">
+          <h6 class="text-uppercase text-muted border-bottom pb-2">Basic Information</h6>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Age (Years)</label>
+          <input type="number" name="Age" class="form-control" value="{{ form_data.get('Age', '') }}" required>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Gender (for Pregnancy)</label>
+          <select id="genderSelect" class="form-select" onchange="togglePregnancy()">
+            <option value="female" {% if form_data.get('Gender')=='Female' %}selected{% endif %}>Female</option>
+            <option value="male" {% if form_data.get('Gender')=='Male' %}selected{% endif %}>Male</option>
+          </select>
+        </div>
+
+        <div class="col-md-4" id="pregDiv">
+          <label class="form-label">Pregnancies (Count)</label>
+          <input type="number" name="Pregnancies" class="form-control" value="{{ form_data.get('Pregnancies', '0') }}">
+        </div>
+
+        <!-- Section: Vitals -->
+        <div class="col-12 mt-4">
+          <h6 class="text-uppercase text-muted border-bottom pb-2">Body Metrics</h6>
+        </div>
+
+        <!-- BMI Calculation Inputs -->
+        <div class="col-md-4">
+          <label class="form-label">BMI</label>
+          <div class="input-group">
+            <input type="number" step="0.1" name="BMI" id="bmiInput" class="form-control"
+              value="{{ form_data.get('BMI', '') }}" placeholder="Auto-calculated">
+            <span class="input-group-text">kg/m²</span>
+          </div>
+          <small class="text-muted">Or enter Height/Weight below</small>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Height</label>
+          <div class="input-group">
+            <input type="number" step="0.1" name="Height" id="heightInput" class="form-control"
+              value="{{ form_data.get('Height', '') }}" oninput="calcBMI()">
+            <span class="input-group-text">cm</span>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Weight</label>
+          <div class="input-group">
+            <input type="number" step="0.1" name="Weight" id="weightInput" class="form-control"
+              value="{{ form_data.get('Weight', '') }}" oninput="calcBMI()">
+            <span class="input-group-text">kg</span>
+          </div>
+        </div>
+
+        <!-- Section: Lab Results -->
+        <div class="col-12 mt-4">
+          <h6 class="text-uppercase text-muted border-bottom pb-2">Lab Values</h6>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label fw-bold">Glucose Level</label>
+          <div class="input-group">
+            <input type="number" step="1" name="Glucose" class="form-control" value="{{ form_data.get('Glucose', '') }}"
+              required>
+            <span class="input-group-text">mg/dL</span>
+          </div>
+          <small class="text-danger">* Critical factor</small>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Blood Pressure (Diastolic)</label>
+          <div class="input-group">
+            <input type="number" step="1" name="BloodPressure" class="form-control"
+              value="{{ form_data.get('BloodPressure', '') }}" placeholder="e.g. 80">
+            <span class="input-group-text">mm Hg</span>
+          </div>
+        </div>
+
+        <!-- Technical Fields (Hidden by Default) -->
+        <div class="col-12 mt-4">
+          <a class="btn btn-link text-decoration-none p-0" data-bs-toggle="collapse" href="#advancedFields"
+            role="button">
+            <i class="bi bi-gear"></i> Show Advanced Clinical Fields (Optional)
+          </a>
+        </div>
+
+        <div class="collapse row g-3" id="advancedFields">
+          <div class="alert alert-info py-2 my-2"><small>Leave these blank to use population averages.</small></div>
+          <div class="col-md-4">
+            <label class="form-label">Skin Thickness</label>
+            <input type="number" name="SkinThickness" class="form-control"
+              value="{{ form_data.get('SkinThickness', '') }}">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Insulin</label>
+            <input type="number" name="Insulin" class="form-control" value="{{ form_data.get('Insulin', '') }}">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Diabetes Pedigree</label>
+            <input type="number" step="0.001" name="DiabetesPedigreeFunction" class="form-control"
+              value="{{ form_data.get('DiabetesPedigreeFunction', '') }}">
+          </div>
+        </div>
+
+        <!-- Submit -->
+        <div class="col-12 mt-4 d-grid">
+          <button type="submit" class="btn btn-success btn-lg shadow">
+            <i class="bi bi-activity me-2"></i> Analyze Risk
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Results Section -->
+{% if prediction %}
+<div class="card shadow border-0 mb-5" id="results">
+  <div class="card-header bg-dark text-white text-center py-4">
+    <h4 class="mb-0">Analysis Result</h4>
+  </div>
+  <div class="card-body p-4">
+
+    <!-- Status Banner -->
+    <div class="text-center mb-5">
+      <h1 class="display-3 fw-bold {{ 'text-danger' if prediction.label == 'Diabetic' else 'text-success' }}">
+        {{ prediction.label }}
+      </h1>
+      <p class="lead">Predicted Risk Probability: <span class="fw-bold">{{ prediction.probability }}%</span></p>
+      <div class="alert {{ 'alert-danger' if prediction.probability > 50 else 'alert-success' }} d-inline-block">
+        {{ care_plan.summary }}
+      </div>
+    </div>
+
+    <div class="row g-4">
+      <!-- Left: Key Factors & Explainability -->
+      <div class="col-lg-7">
+        <h5 class="fw-bold border-bottom pb-2 mb-3">Why this result?</h5>
+
+        <ul class="list-group list-group-flush mb-4">
+          {% for item in care_plan.key_factors %}
+          <li class="list-group-item d-flex justify-content-between align-items-start px-0">
+            <div class="ms-2 me-auto">
+              <div class="fw-bold text-dark"><i class="bi bi-exclamation-circle text-warning me-2"></i>{{ item.factor }}
+              </div>
+              <span class="text-muted small">{{ item.action }}</span>
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+
+        <!-- Technical Details Accordion -->
+        <div class="accordion" id="techAccordion">
+          <div class="accordion-item border-0 bg-light">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed bg-light opacity-75" type="button" data-bs-toggle="collapse"
+                data-bs-target="#collapseTech">
+                View Technical SHAP/LIME Analysis
+              </button>
+            </h2>
+            <div id="collapseTech" class="accordion-collapse collapse">
+              <div class="accordion-body">
+                <div class="row">
+                  <div class="col-12 mb-3">
+                    <h6>SHAP Feature Impact</h6>
+                    {% if shap_img %}<img src="{{ shap_img }}" class="img-fluid rounded border">{% endif %}
+                  </div>
+                  <div class="col-12">
+                    <h6>LIME Local Explanation</h6>
+                    {% if lime_img %}<img src="{{ lime_img }}" class="img-fluid rounded border">{% endif %}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right: Action Plan -->
+      <div class="col-lg-5">
+        <div class="card bg-primary text-white h-100 shadow-sm">
+          <div class="card-body">
+            <h4 class="card-title fw-bold mb-4"><i class="bi bi-check-circle-fill me-2"></i>Recommended Actions</h4>
+            <ol class="list-group list-group-numbered list-group-flush text-dark fs-5">
+              {% for item in care_plan.key_factors[:3] %}
+              <li class="list-group-item bg-white bg-opacity-75 rounded mb-2">
+                {{ item.action }}
+              </li>
+              {% endfor %}
+              <li class="list-group-item bg-white bg-opacity-75 rounded mb-2">
+                Consult a certified healthcare professional for a comprehensive diagnosis.
+              </li>
+            </ol>
+          </div>
+          <div class="card-footer border-0">
+            <small class="opacity-75">Note: This is an AI-assisted screening tool, not a medical diagnosis.</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endif %}
+
+
+<!-- JS for Interaction -->
+<script>
+  function togglePregnancy() {
+    const gender = document.getElementById("genderSelect").value;
+    const div = document.getElementById("pregDiv");
+    if (gender === "male") {
+      div.style.display = "none";
+      document.querySelector("[name='Pregnancies']").value = 0;
+    } else {
+      div.style.display = "block";
+    }
+  }
+
+  function calcBMI() {
+    const h = parseFloat(document.getElementById("heightInput").value);
+    const w = parseFloat(document.getElementById("weightInput").value);
+    if (h > 0 && w > 0) {
+      // h in cm -> m
+      const hm = h / 100;
+      const bmi = w / (hm * hm);
+      document.getElementById("bmiInput").value = bmi.toFixed(1);
+    }
+  }
+</script>
+
+{% endblock %}

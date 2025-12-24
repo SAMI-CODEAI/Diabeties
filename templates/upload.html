@@ -1,0 +1,18 @@
+{% extends "layout.html" %}
+{% block body %}
+<h3>Upload dataset (CSV)</h3>
+<form method="post" enctype="multipart/form-data">
+  <div class="mb-3">
+    <input type="file" name="file" accept=".csv" class="form-control" required>
+  </div>
+  <button class="btn btn-primary">Upload & Predict</button>
+</form>
+
+{% if result %}
+  <div class="card mt-4 p-3">
+    <p>Total records: <strong>{{ result.total }}</strong></p>
+    <p>Predicted diabetic: <strong>{{ result.predicted_diabetic }}</strong></p>
+    <p>Percentage: <strong>{{ result.percentage }}%</strong></p>
+  </div>
+{% endif %}
+{% endblock %}
