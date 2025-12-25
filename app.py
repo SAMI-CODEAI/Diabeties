@@ -31,7 +31,10 @@ import joblib
 import pandas as pd
 from utils import (EXPECTED_FEATURES, validate_and_prepare_df,
                    single_input_to_df, generate_care_plan,
-                   generate_shap_plot, generate_lime_plot)
+                   generate_shap_plot, generate_lime_plot,
+                   analyze_dataset_features, generate_feature_importance_plot,
+                   generate_distribution_plot, calculate_dataset_statistics,
+                   save_predictions_csv)
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
@@ -183,17 +186,55 @@ def upload():
             flash("Please upload a CSV file", "warning")
             return redirect(request.url)
         try:
+            # Read and validate CSV
             df = pd.read_csv(file)
             df_clean = validate_and_prepare_df(df)
+            
+            # Make predictions
             X = df_clean.values
             X_scaled = scaler.transform(X)
             preds = model.predict(X_scaled)
+            probs = model.predict_proba(X_scaled)[:, 1]  # Probability of diabetic class
+            
+            # Basic statistics
             count_diabetic = int(np.sum(preds == 1))
             total = len(preds)
             percent = round(count_diabetic/total * 100, 2)
-            result = {"total": total, "predicted_diabetic": count_diabetic, "percentage": percent}
+            
+            # Feature importance analysis
+            feature_importance = analyze_dataset_features(model, scaler, df_clean, preds, probs)
+            
+            # Generate visualizations
+            feature_plot = None
+            if feature_importance:
+                feature_plot = generate_feature_importance_plot(feature_importance)
+            
+            distribution_plot = generate_distribution_plot(preds, probs)
+            
+            # Calculate dataset statistics
+            statistics = calculate_dataset_statistics(df_clean)
+            
+            # Save predictions to CSV
+            csv_filename = save_predictions_csv(df, preds, probs)
+            
+            result = {
+                "total": total,
+                "predicted_diabetic": count_diabetic,
+                "percentage": percent,
+                "feature_importance": feature_importance,
+                "feature_plot": feature_plot,
+                "distribution_plot": distribution_plot,
+                "statistics": statistics,
+                "csv_filename": csv_filename,
+                "csv_path": True if csv_filename else False
+            }
+            
+            flash(f"Successfully analyzed {total} records!", "success")
+            
         except Exception as e:
             flash("Error processing CSV: " + str(e), "danger")
+            import traceback
+            print(traceback.format_exc())
     return render_template("upload.html", result=result)
 
 @app.route("/self", methods=["GET","POST"])
@@ -279,6 +320,48 @@ def upload_pdf():
     finally:
         if os.path.exists(temp_path):
             os.remove(temp_path)
+
+@app.route("/download_sample_csv")
+def download_sample_csv():
+    """Generate and download a sample CSV template"""
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+    
+    # Create sample CSV
+    sample_data = {
+        'Pregnancies': [1, 0, 3],
+        'Glucose': [85, 120, 140],
+        'BloodPressure': [70, 80, 90],
+        'SkinThickness': [20, 25, 30],
+        'Insulin': [50, 100, 150],
+        'BMI': [25.5, 28.0, 32.5],
+        'DiabetesPedigreeFunction': [0.25, 0.35, 0.45],
+        'Age': [25, 35, 45]
+    }
+    sample_df = pd.DataFrame(sample_data)
+    
+    # Save to temp location
+    temp_path = os.path.join("static", "dataset_analysis", "sample_template.csv")
+    sample_df.to_csv(temp_path, index=False)
+    
+    return send_from_directory(
+        os.path.join(os.getcwd(), 'static', 'dataset_analysis'),
+        'sample_template.csv',
+        as_attachment=True,
+        download_name='diabetes_dataset_template.csv'
+    )
+
+@app.route("/download_results/<filename>")
+def download_results(filename):
+    """Download the predictions CSV file"""
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+    
+    return send_from_directory(
+        os.path.join(os.getcwd(), 'static', 'dataset_analysis'),
+        filename,
+        as_attachment=True
+    )
 
 # static route for saved images (Flask serves /static automatically)
 if __name__ == "__main__":

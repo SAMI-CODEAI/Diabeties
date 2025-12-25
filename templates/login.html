@@ -1,20 +1,31 @@
 {% extends "layout.html" %}
+
 {% block body %}
 <div class="row justify-content-center">
-  <div class="col-md-6">
-    <h3>Login</h3>
-    <form method="post">
-      <div class="mb-3">
-        <label>Email</label>
-        <input class="form-control" name="email" required placeholder="you@example.com">
+  <div class="col-md-5 col-lg-4">
+    <div class="card mt-5">
+      <div class="card-body p-5">
+        <div class="text-center mb-4">
+          <h3 class="fw-bold">Welcome Back</h3>
+          <p class="text-muted">Sign in to GlucoVision</p>
+        </div>
+        <form method="post">
+          <div class="mb-3">
+            <label class="form-label">Email Address</label>
+            <input class="form-control" name="email" type="email" required placeholder="you@example.com">
+          </div>
+          <div class="mb-4">
+            <label class="form-label">Password</label>
+            <input class="form-control" name="password" type="password" required placeholder="Enter password">
+          </div>
+          <button class="btn btn-primary w-100 mb-3">Sign In</button>
+          <div class="text-center">
+            <span class="text-muted">Don't have an account?</span>
+            <a href="{{ url_for('register') }}" class="text-decoration-none">Register</a>
+          </div>
+        </form>
       </div>
-      <div class="mb-3">
-        <label>Password</label>
-        <input class="form-control" name="password" type="password" required>
-      </div>
-      <button class="btn btn-primary">Login</button>
-      <a href="{{ url_for('register') }}" class="btn btn-link">Register</a>
-    </form>
+    </div>
   </div>
 </div>
 {% endblock %}
