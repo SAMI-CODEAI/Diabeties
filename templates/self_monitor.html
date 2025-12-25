@@ -2,251 +2,312 @@
 
 {% block body %}
 <!-- Page Header -->
+<div class="row mb-4 fade-in-up">
+  <div class="col">
+    <h1 class="display-5 fw-bold"><i class="bi bi-activity me-3" style="color: var(--accent-teal);"></i>Personal Risk
+      Assessment</h1>
+    <p class="lead text-muted">Analyze your diabetes risk using lab reports or manual entry</p>
+  </div>
+</div>
+
+<!-- PDF Upload Option -->
 <div class="row mb-4">
-  <div class="col-md-8">
-    <h1 class="display-6 fw-bold text-primary">Patient Health Monitor</h1>
-    <p class="text-muted">Analyze your risk using lab reports (PDF) or manual entry.
-      <span class="badge bg-warning text-dark">Beta</span>
-    </p>
-  </div>
-</div>
-
-<!-- Step 1: PDF Upload (Optional) -->
-<div class="card shadow-sm mb-4">
-  <div class="card-header bg-light">
-    <h5 class="mb-0 fw-bold"><i class="bi bi-file-earmark-pdf me-2"></i>Option A: Upload Lab Report (PDF)</h5>
-  </div>
-  <div class="card-body">
-    <form action="{{ url_for('upload_pdf') }}" method="post" enctype="multipart/form-data"
-      class="d-flex align-items-center gap-3">
-      <input type="file" name="pdf_file" class="form-control w-50" accept=".pdf" required>
-      <button type="submit" class="btn btn-outline-primary">
-        <i class="bi bi-magic me-1"></i> Auto-Fill Form
-      </button>
-    </form>
-    <small class="text-muted">We will attempt to extract Glucose, Age, BP, and BMI/Weight.</small>
-  </div>
-</div>
-
-<!-- Step 2: Main Form -->
-<div class="card shadow-sm mb-5">
-  <div class="card-header bg-primary text-white">
-    <h5 class="mb-0 fw-bold"><i class="bi bi-clipboard-data me-2"></i>Option B: Patient Data Form</h5>
-  </div>
-  <div class="card-body">
-
-    <form method="post" action="{{ url_for('self_monitor') }}">
-      <div class="row g-3">
-        <!-- Section: Basic Demographics -->
-        <div class="col-12">
-          <h6 class="text-uppercase text-muted border-bottom pb-2">Basic Information</h6>
-        </div>
-
-        <div class="col-md-4">
-          <label class="form-label">Age (Years)</label>
-          <input type="number" name="Age" class="form-control" value="{{ form_data.get('Age', '') }}" required>
-        </div>
-
-        <div class="col-md-4">
-          <label class="form-label">Gender (for Pregnancy)</label>
-          <select id="genderSelect" class="form-select" onchange="togglePregnancy()">
-            <option value="female" {% if form_data.get('Gender')=='Female' %}selected{% endif %}>Female</option>
-            <option value="male" {% if form_data.get('Gender')=='Male' %}selected{% endif %}>Male</option>
-          </select>
-        </div>
-
-        <div class="col-md-4" id="pregDiv">
-          <label class="form-label">Pregnancies (Count)</label>
-          <input type="number" name="Pregnancies" class="form-control" value="{{ form_data.get('Pregnancies', '0') }}">
-        </div>
-
-        <!-- Section: Vitals -->
-        <div class="col-12 mt-4">
-          <h6 class="text-uppercase text-muted border-bottom pb-2">Body Metrics</h6>
-        </div>
-
-        <!-- BMI Calculation Inputs -->
-        <div class="col-md-4">
-          <label class="form-label">BMI</label>
-          <div class="input-group">
-            <input type="number" step="0.1" name="BMI" id="bmiInput" class="form-control"
-              value="{{ form_data.get('BMI', '') }}" placeholder="Auto-calculated">
-            <span class="input-group-text">kg/m²</span>
-          </div>
-          <small class="text-muted">Or enter Height/Weight below</small>
-        </div>
-        <div class="col-md-4">
-          <label class="form-label">Height</label>
-          <div class="input-group">
-            <input type="number" step="0.1" name="Height" id="heightInput" class="form-control"
-              value="{{ form_data.get('Height', '') }}" oninput="calcBMI()">
-            <span class="input-group-text">cm</span>
-          </div>
-        </div>
-        <div class="col-md-4">
-          <label class="form-label">Weight</label>
-          <div class="input-group">
-            <input type="number" step="0.1" name="Weight" id="weightInput" class="form-control"
-              value="{{ form_data.get('Weight', '') }}" oninput="calcBMI()">
-            <span class="input-group-text">kg</span>
-          </div>
-        </div>
-
-        <!-- Section: Lab Results -->
-        <div class="col-12 mt-4">
-          <h6 class="text-uppercase text-muted border-bottom pb-2">Lab Values</h6>
-        </div>
-
-        <div class="col-md-6">
-          <label class="form-label fw-bold">Glucose Level</label>
-          <div class="input-group">
-            <input type="number" step="1" name="Glucose" class="form-control" value="{{ form_data.get('Glucose', '') }}"
-              required>
-            <span class="input-group-text">mg/dL</span>
-          </div>
-          <small class="text-danger">* Critical factor</small>
-        </div>
-
-        <div class="col-md-6">
-          <label class="form-label">Blood Pressure (Diastolic)</label>
-          <div class="input-group">
-            <input type="number" step="1" name="BloodPressure" class="form-control"
-              value="{{ form_data.get('BloodPressure', '') }}" placeholder="e.g. 80">
-            <span class="input-group-text">mm Hg</span>
-          </div>
-        </div>
-
-        <!-- Technical Fields (Hidden by Default) -->
-        <div class="col-12 mt-4">
-          <a class="btn btn-link text-decoration-none p-0" data-bs-toggle="collapse" href="#advancedFields"
-            role="button">
-            <i class="bi bi-gear"></i> Show Advanced Clinical Fields (Optional)
-          </a>
-        </div>
-
-        <div class="collapse row g-3" id="advancedFields">
-          <div class="alert alert-info py-2 my-2"><small>Leave these blank to use population averages.</small></div>
-          <div class="col-md-4">
-            <label class="form-label">Skin Thickness</label>
-            <input type="number" name="SkinThickness" class="form-control"
-              value="{{ form_data.get('SkinThickness', '') }}">
-          </div>
-          <div class="col-md-4">
-            <label class="form-label">Insulin</label>
-            <input type="number" name="Insulin" class="form-control" value="{{ form_data.get('Insulin', '') }}">
-          </div>
-          <div class="col-md-4">
-            <label class="form-label">Diabetes Pedigree</label>
-            <input type="number" step="0.001" name="DiabetesPedigreeFunction" class="form-control"
-              value="{{ form_data.get('DiabetesPedigreeFunction', '') }}">
-          </div>
-        </div>
-
-        <!-- Submit -->
-        <div class="col-12 mt-4 d-grid">
-          <button type="submit" class="btn btn-success btn-lg shadow">
-            <i class="bi bi-activity me-2"></i> Analyze Risk
-          </button>
-        </div>
+  <div class="col-lg-10 mx-auto">
+    <div class="card fade-in-up">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-file-earmark-medical me-2"></i>Upload Lab Report (PDF)</h5>
       </div>
-    </form>
+      <div class="card-body">
+        <form action="{{ url_for('upload_pdf') }}" method="post" enctype="multipart/form-data"
+          class="row g-3 align-items-end">
+          <div class="col-md-9">
+            <label class="form-label">Select PDF File</label>
+            <input type="file" name="pdf_file" class="form-control" accept=".pdf" required>
+            <div class="form-text">We'll extract glucose, blood pressure, and BMI automatically</div>
+          </div>
+          <div class="col-md-3">
+            <button type="submit" class="btn btn-primary w-100">
+              <i class="bi bi-magic me-1"></i>Auto-Fill
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Manual Entry Form -->
+<div class="row mb-5">
+  <div class="col-lg-10 mx-auto">
+    <div class="card fade-in-up">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-clipboard2-pulse me-2"></i>Manual Entry Form</h5>
+      </div>
+      <div class="card-body p-4">
+
+        <form method="post" action="{{ url_for('self_monitor') }}">
+          <div class="row g-4">
+
+            <!-- Basic Information Section -->
+            <div class="col-12">
+              <h6 class="fw-bold text-uppercase mb-3" style="color: var(--primary-blue); letter-spacing: 0.05em;">
+                <i class="bi bi-person-badge me-2"></i>Basic Information
+              </h6>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">Age</label>
+              <div class="input-group">
+                <input type="number" name="Age" class="form-control" value="{{ form_data.get('Age', '') }}" required>
+                <span class="input-group-text">years</span>
+              </div>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">Gender</label>
+              <select id="genderSelect" class="form-select" onchange="toggle Pregnancy()">
+                <option value="female" {% if form_data.get('Gender')=='Female' %}selected{% endif %}>Female</option>
+                <option value="male" {% if form_data.get('Gender')=='Male' %}selected{% endif %}>Male</option>
+              </select>
+            </div>
+
+            <div class="col-md-4" id="pregDiv">
+              <label class="form-label">Pregnancies</label>
+              <div class="input-group">
+                <input type="number" name="Pregnancies" class="form-control"
+                  value="{{ form_data.get('Pregnancies', '0') }}">
+                <span class="input-group-text">count</span>
+              </div>
+            </div>
+
+            <!-- Body Metrics Section -->
+            <div class="col-12 mt-5">
+              <h6 class="fw-bold text-uppercase mb-3" style="color: var(--primary-blue); letter-spacing: 0.05em;">
+                <i class="bi bi-rulers me-2"></i>Body Measurements
+              </h6>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">Height</label>
+              <div class="input-group">
+                <input type="number" step="0.1" name="Height" id="heightInput" class="form-control"
+                  value="{{ form_data.get('Height', '') }}" oninput="convertHeight(); calcBMI();">
+                <select class="unit-selector" id="heightUnit" onchange="convertHeight(); calcBMI();">
+                  <option value="cm">cm</option>
+                  <option value="m">meters</option>
+                  <option value="in">inches</option>
+                  <option value="ft">feet</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">Weight</label>
+              <div class="input-group">
+                <input type="number" step="0.1" name="Weight" id="weightInput" class="form-control"
+                  value="{{ form_data.get('Weight', '') }}" oninput="convertWeight(); calcBMI();">
+                <select class="unit-selector" id="weightUnit" onchange="convertWeight(); calcBMI();">
+                  <option value="kg">kg</option>
+                  <option value="g">grams</option>
+                  <option value="lb">pounds</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">BMI (Auto-calculated)</label>
+              <div class="input-group">
+                <input type="number" step="0.1" name="BMI" id="bmiInput" class="form-control"
+                  value="{{ form_data.get('BMI', '') }}" readonly style="background: var(--neutral-100);">
+                <span class="input-group-text">kg/m²</span>
+              </div>
+            </div>
+
+            <!-- Lab Values Section -->
+            <div class="col-12 mt-5">
+              <h6 class="fw-bold text-uppercase mb-3" style="color: var(--primary-blue); letter-spacing: 0.05em;">
+                <i class="bi bi-droplet-half me-2"></i>Laboratory Values
+              </h6>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Blood Glucose <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <input type="number" step="0.1" name="Glucose" id="glucoseInput" class="form-control"
+                  value="{{ form_data.get('Glucose', '') }}" oninput="convertGlucose()" required>
+                <select class="unit-selector" id="glucoseUnit" onchange="convertGlucose()">
+                  <option value="mg/dL">mg/dL</option>
+                  <option value="mmol/L">mmol/L</option>
+                </select>
+              </div>
+              <div class="form-text">Normal fasting: 70-100 mg/dL</div>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Blood Pressure (Diastolic)</label>
+              <div class="input-group">
+                <input type="number" step="1" name="BloodPressure" id="bpInput" class="form-control"
+                  value="{{ form_data.get('BloodPressure', '') }}" oninput="convertBP()">
+                <select class="unit-selector" id="bpUnit" onchange="convertBP()">
+                  <option value="mmHg">mm Hg</option>
+                  <option value="kPa">kPa</option>
+                </select>
+              </div>
+              <div class="form-text">Normal: 60-80 mm Hg</div>
+            </div>
+
+            <!-- Advanced Fields (Collapsible) -->
+            <div class="col-12 mt-4">
+              <a class="btn btn-link text-decoration-none p-0" data-bs-toggle="collapse" href="#advancedFields">
+                <i class="bi bi-plus-circle me-2"></i>Advanced Clinical Parameters (Optional)
+              </a>
+            </div>
+
+            <div class="collapse row g-3" id="advancedFields">
+              <div class="col-12">
+                <div class="alert alert-info">
+                  <small><i class="bi bi-info-circle me-2"></i>Leave blank to use population averages</small>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Skin Thickness</label>
+                <div class="input-group">
+                  <input type="number" name="SkinThickness" class="form-control"
+                    value="{{ form_data.get('SkinThickness', '') }}">
+                  <span class="input-group-text">mm</span>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Insulin Level</label>
+                <div class="input-group">
+                  <input type="number" name="Insulin" class="form-control" value="{{ form_data.get('Insulin', '') }}">
+                  <span class="input-group-text">μU/mL</span>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Diabetes Pedigree Function</label>
+                <input type="number" step="0.001" name="DiabetesPedigreeFunction" class="form-control"
+                  value="{{ form_data.get('DiabetesPedigreeFunction', '') }}">
+              </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="col-12 mt-5">
+              <button type="submit" class="btn btn-success btn-lg w-100">
+                <i class="bi bi-graph-up-arrow me-2"></i>Analyze Risk Profile
+              </button>
+            </div>
+
+          </div>
+        </form>
+
+      </div>
+    </div>
   </div>
 </div>
 
 <!-- Results Section -->
 {% if prediction %}
-<div class="card shadow border-0 mb-5" id="results">
-  <div class="card-header bg-dark text-white text-center py-4">
-    <h4 class="mb-0">Analysis Result</h4>
-  </div>
-  <div class="card-body p-4">
-
-    <!-- Status Banner -->
-    <div class="text-center mb-5">
-      <h1 class="display-3 fw-bold {{ 'text-danger' if prediction.label == 'Diabetic' else 'text-success' }}">
-        {{ prediction.label }}
-      </h1>
-      <p class="lead">Predicted Risk Probability: <span class="fw-bold">{{ prediction.probability }}%</span></p>
-      <div class="alert {{ 'alert-danger' if prediction.probability > 50 else 'alert-success' }} d-inline-block">
-        {{ care_plan.summary }}
+<div class="row fade-in-up">
+  <div class="col-lg-10 mx-auto">
+    <div class="card"
+      style="border: 2px solid {{ 'var(--medical-red)' if prediction.label == 'Diabetic' else 'var(--accent-green)' }};">
+      <div class="card-header text-white text-center py-4"
+        style="background: {{ 'var(--gradient-primary)' if prediction.label != 'Diabetic' else 'linearгradient(135deg, #E63946 0%, #F77F00 100%)' }};">
+        <h3 class="mb-2"><i class="bi bi-clipboard-check me-2"></i>Risk Assessment Results</h3>
       </div>
-    </div>
+      <div class="card-body p-4">
 
-    <div class="row g-4">
-      <!-- Left: Key Factors & Explainability -->
-      <div class="col-lg-7">
-        <h5 class="fw-bold border-bottom pb-2 mb-3">Why this result?</h5>
+        <!-- Status Banner -->
+        <div class="text-center mb-5 p-4" style="background: var(--gradient-subtle); border-radius: var(--radius-md);">
+          <h1 class="display-2 fw-bold mb-3"
+            style="color: {{ 'var(--medical-red)' if prediction.label == 'Diabetic' else 'var(--accent-green)' }};">
+            {{ prediction.label }}
+          </h1>
+          <p class="lead mb-2">Risk Probability: <span class="fw-bold" style="color: var(--primary-blue);">{{
+              prediction.probability }}%</span></p>
+          <div
+            class="alert {{ 'alert-danger' if prediction.probability > 50 else 'alert-success' }} d-inline-block mb-0">
+            <i
+              class="bi bi-{{ 'exclamation-triangle-fill' if prediction.probability > 50 else 'check-circle-fill' }} me-2"></i>
+            {{ care_plan.summary }}
+          </div>
+        </div>
 
-        <ul class="list-group list-group-flush mb-4">
-          {% for item in care_plan.key_factors %}
-          <li class="list-group-item d-flex justify-content-between align-items-start px-0">
-            <div class="ms-2 me-auto">
-              <div class="fw-bold text-dark"><i class="bi bi-exclamation-circle text-warning me-2"></i>{{ item.factor }}
+        <div class="row g-4">
+          <!-- Left: Key Factors -->
+          <div class="col-lg-7">
+            <h5 class="fw-bold mb-3 pb-2" style="border-bottom: 2px solid var(--primary-blue);">
+              <i class="bi bi-lightbulb me-2" style="color: var(--warning-amber);"></i>Key Contributing Factors
+            </h5>
+
+            {% for item in care_plan.key_factors %}
+            <div class="feature-item">
+              <div class="flex-grow-1">
+                <div class="fw-bold mb-1">{{ item.factor }}</div>
+                <small class="text-muted">{{ item.action }}</small>
               </div>
-              <span class="text-muted small">{{ item.action }}</span>
             </div>
-          </li>
-          {% endfor %}
-        </ul>
+            {% endfor %}
 
-        <!-- Technical Details Accordion -->
-        <div class="accordion" id="techAccordion">
-          <div class="accordion-item border-0 bg-light">
-            <h2 class="accordion-header">
-              <button class="accordion-button collapsed bg-light opacity-75" type="button" data-bs-toggle="collapse"
-                data-bs-target="#collapseTech">
-                View Technical SHAP/LIME Analysis
-              </button>
-            </h2>
-            <div id="collapseTech" class="accordion-collapse collapse">
-              <div class="accordion-body">
-                <div class="row">
-                  <div class="col-12 mb-3">
-                    <h6>SHAP Feature Impact</h6>
-                    {% if shap_img %}<img src="{{ shap_img }}" class="img-fluid rounded border">{% endif %}
+            <!-- Technical Analysis (Accordion) -->
+            <div class="mt-4">
+              <a class="btn btn-link text-decoration-none p-0" data-bs-toggle="collapse" href="#techAnalysis">
+                <i class="bi bi-graph-up me-2"></i>View Technical XAI Analysis
+              </a>
+              <div class="collapse mt-3" id="techAnalysis">
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <div class="graph-container">
+                      <h6 class="fw-bold mb-2">SHAP Values</h6>
+                      {% if shap_img %}<img src="{{ shap_img }}" class="img-fluid">{% endif %}
+                    </div>
                   </div>
-                  <div class="col-12">
-                    <h6>LIME Local Explanation</h6>
-                    {% if lime_img %}<img src="{{ lime_img }}" class="img-fluid rounded border">{% endif %}
+                  <div class="col-md-6">
+                    <div class="graph-container">
+                      <h6 class="fw-bold mb-2">LIME Explanation</h6>
+                      {% if lime_img %}<img src="{{ lime_img }}" class="img-fluid">{% endif %}
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-      </div>
-
-      <!-- Right: Action Plan -->
-      <div class="col-lg-5">
-        <div class="card bg-primary text-white h-100 shadow-sm">
-          <div class="card-body">
-            <h4 class="card-title fw-bold mb-4"><i class="bi bi-check-circle-fill me-2"></i>Recommended Actions</h4>
-            <ol class="list-group list-group-numbered list-group-flush text-dark fs-5">
-              {% for item in care_plan.key_factors[:3] %}
-              <li class="list-group-item bg-white bg-opacity-75 rounded mb-2">
-                {{ item.action }}
-              </li>
-              {% endfor %}
-              <li class="list-group-item bg-white bg-opacity-75 rounded mb-2">
-                Consult a certified healthcare professional for a comprehensive diagnosis.
-              </li>
-            </ol>
-          </div>
-          <div class="card-footer border-0">
-            <small class="opacity-75">Note: This is an AI-assisted screening tool, not a medical diagnosis.</small>
+          <!-- Right: Action Plan -->
+          <div class="col-lg-5">
+            <div class="card h-100" style="background: var(--gradient-primary); color: var(--white);">
+              <div class="card-body">
+                <h5 class="fw-bold mb-4"><i class="bi bi-list-check me-2"></i>Recommended Actions</h5>
+                <ol class="mb-0" style="line-height: 2;">
+                  {% for item in care_plan.key_factors[:3] %}
+                  <li class="mb-3">{{ item.action }}</li>
+                  {% endfor %}
+                  <li class="mb-0">Consult a healthcare professional for comprehensive diagnosis and personalized care
+                    plan.</li>
+                </ol>
+              </div>
+              <div class="card-footer border-0" style="background: rgba(255,255,255,0.1);">
+                <small class="opacity-90"><i class="bi bi-info-circle me-1"></i>This is an AI screening tool, not a
+                  medical diagnosis.</small>
+              </div>
+            </div>
           </div>
         </div>
+
       </div>
     </div>
-
   </div>
 </div>
 {% endif %}
 
+{% endblock %}
 
-<!-- JS for Interaction -->
+{% block scripts %}
 <script>
+  // Unit Conversion Functions
+  let heightCm = 0, weightKg = 0;
+
   function togglePregnancy() {
     const gender = document.getElementById("genderSelect").value;
     const div = document.getElementById("pregDiv");
@@ -258,16 +319,68 @@
     }
   }
 
+  function convertHeight() {
+    const input = parseFloat(document.getElementById("heightInput").value) || 0;
+    const unit = document.getElementById("heightUnit").value;
+
+    // Convert to cm
+    switch (unit) {
+      case "m": heightCm = input * 100; break;
+      case "in": heightCm = input * 2.54; break;
+      case "ft": heightCm = input * 30.48; break;
+      default: heightCm = input;
+    }
+  }
+
+  function convertWeight() {
+    const input = parseFloat(document.getElementById("weightInput").value) || 0;
+    const unit = document.getElementById("weightUnit").value;
+
+    // Convert to kg
+    switch (unit) {
+      case "g": weightKg = input / 1000; break;
+      case "lb": weightKg = input * 0.453592; break;
+      default: weightKg = input;
+    }
+  }
+
   function calcBMI() {
-    const h = parseFloat(document.getElementById("heightInput").value);
-    const w = parseFloat(document.getElementById("weightInput").value);
-    if (h > 0 && w > 0) {
-      // h in cm -> m
-      const hm = h / 100;
-      const bmi = w / (hm * hm);
+    convertHeight();
+    convertWeight();
+
+    if (heightCm > 0 && weightKg > 0) {
+      const heightM = heightCm / 100;
+      const bmi = weightKg / (heightM * heightM);
       document.getElementById("bmiInput").value = bmi.toFixed(1);
     }
   }
-</script>
 
+  function convertGlucose() {
+    const input = parseFloat(document.getElementById("glucoseInput").value) || 0;
+    const unit = document.getElementById("glucoseUnit").value;
+    const glucoseInput = document.getElementById("glucoseInput");
+
+    // Store in mg/dL (model expects mg/dL)
+    if (unit === "mmol/L") {
+      // Convert mmol/L to mg/dL for model
+      const mgdl = input * 18.0182;
+      // We update a hidden field or just convert back when submitting
+    }
+  }
+
+  function convertBP() {
+    const input = parseFloat(document.getElementById("bpInput").value) || 0;
+    const unit = document.getElementById("bpUnit").value;
+
+    // Store in mmHg (model expects mmHg)
+    if (unit === "kPa") {
+      const mmHg = input * 7.50062;
+    }
+  }
+
+  // Initialize
+  document.addEventListener('DOMContentLoaded', function () {
+    togglePregnancy();
+  });
+</script>
 {% endblock %}

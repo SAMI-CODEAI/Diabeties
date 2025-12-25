@@ -2,113 +2,88 @@
 
 {% block body %}
 <!-- Page Header -->
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <div>
-    <h1 class="display-5 fw-bold text-primary">Literature Comparison</h1>
-    <p class="lead text-muted">Analysis of GlucoVision against existing research and state-of-the-art models.</p>
+<div class="row mb-4">
+  <div class="col">
+    <h1 class="fw-bold">Research & Comparative Analysis</h1>
+    <p class="lead">GlucoVision performance compared to state-of-the-art models</p>
   </div>
-  <a class="btn btn-secondary shadow-sm" href="{{ url_for('dashboard') }}">
-    <i class="bi bi-arrow-left"></i> Back to Dashboard
-  </a>
 </div>
 
-<!-- Comparison Table Section -->
-<div class="card shadow-sm mb-5 border-0">
-  <div class="card-header bg-primary text-white">
-    <h5 class="mb-0"><i class="bi bi-table me-2"></i>Combined Comparison Data</h5>
+<!-- Comparison Table -->
+<div class="card mb-5">
+  <div class="card-header">
+    <h5 class="mb-0">Performance Comparison Data</h5>
   </div>
   <div class="card-body p-0">
     <div class="table-responsive p-3" style="max-height: 500px; overflow-y: auto;">
-      <!-- Inject styling into the pandas HTML table -->
-      <style>
-        .dataframe {
-          width: 100%;
-          border-collapse: collapse;
-        }
-
-        .dataframe th {
-          position: sticky;
-          top: 0;
-          background: #f8f9fa;
-          z-index: 10;
-          padding: 12px;
-        }
-
-        .dataframe td {
-          padding: 10px;
-          border-bottom: 1px solid #dee2e6;
-        }
-
-        .dataframe tr:hover {
-          background-color: #f1f3f5;
-        }
-      </style>
       {{ table_html | safe }}
     </div>
   </div>
 </div>
 
-<!-- Visualization Grid -->
+<!-- Visualizations -->
 <div class="row g-4">
 
-  <!-- Left Column -->
-  <div class="col-lg-6">
-    <!-- Accuracy Chart -->
-    <div class="card shadow h-100 border-0">
-      <div class="card-header bg-white border-bottom-0 pt-4 px-4">
-        <h5 class="fw-bold text-dark">Accuracy & Performance</h5>
-        <small class="text-muted">Comparing reported accuracy metrics across studies.</small>
-      </div>
-      <div class="card-body text-center">
-        <img src="{{ url_for('comparison_image', filename='accuracy_comparison.png') }}" alt="Accuracy comparison"
-          class="img-fluid rounded" />
-      </div>
-    </div>
-  </div>
-
-  <!-- Right Column -->
-  <div class="col-lg-6">
-    <!-- XAI Usage Chart -->
-    <div class="card shadow h-100 border-0">
-      <div class="card-header bg-white border-bottom-0 pt-4 px-4">
-        <h5 class="fw-bold text-dark">Explainable AI Adoption</h5>
-        <small class="text-muted">Specific XAI techniques used in related works.</small>
-      </div>
-      <div class="card-body text-center">
-        <img src="{{ url_for('comparison_image', filename='xai_per_paper.png') }}" alt="XAI usage per paper"
-          class="img-fluid rounded" />
-      </div>
-    </div>
-  </div>
-
-  <!-- Timeline (Full Width) -->
+  <!-- Accuracy Comparison -->
   <div class="col-12">
-    <div class="card shadow border-0">
-      <div class="card-header bg-white border-bottom-0 pt-4 px-4">
-        <h5 class="fw-bold text-dark">Evolution of Techniques</h5>
-        <small class="text-muted">Timeline showing the shift from Traditional ML to Deep Learning and Explainable
-          AI.</small>
+    <div class="card">
+      <div class="card-header">
+        <h5 class="fw-bold mb-0">Model Accuracy & Performance</h5>
       </div>
-      <div class="card-body text-center">
-        <img src="{{ url_for('comparison_image', filename='timeline_evolution.png') }}" alt="Timeline"
-          class="img-fluid rounded" />
+      <div class="card-body p-4 text-center">
+        <div class="graph-container">
+          <img src="{{ url_for('comparison_image', filename='accuracy_comparison.png') }}" alt="Accuracy Comparison"
+            class="img-fluid">
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Heatmap (Full Width or Half) -->
+  <!-- XAI Adoption -->
   <div class="col-12">
-    <div class="card shadow border-0">
-      <div class="card-header bg-white border-bottom-0 pt-4 px-4">
-        <h5 class="fw-bold text-dark">Model Usage Heatmap</h5>
-        <small class="text-muted">Clustering of algorithms used in the domain.</small>
+    <div class="card">
+      <div class="card-header">
+        <h5 class="fw-bold mb-0">Explainable AI Techniques</h5>
       </div>
-      <div class="card-body text-center">
-        <img src="{{ url_for('comparison_image', filename='model_usage_heatmap.png') }}" alt="Heatmap"
-          class="img-fluid rounded" />
+      <div class="card-body p-4 text-center">
+        <div class="graph-container">
+          <img src="{{ url_for('comparison_image', filename='xai_per_paper.png') }}" alt="XAI Adoption"
+            class="img-fluid">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Timeline -->
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="fw-bold mb-0">Evolution of Techniques</h5>
+      </div>
+      <div class="card-body p-4 text-center">
+        <div class="graph-container">
+          <img src="{{ url_for('comparison_image', filename='timeline_evolution.png') }}" alt="Timeline"
+            class="img-fluid">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Heatmap -->
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="fw-bold mb-0">Model Usage Analysis</h5>
+      </div>
+      <div class="card-body p-4 text-center">
+        <div class="graph-container">
+          <img src="{{ url_for('comparison_image', filename='model_usage_heatmap.png') }}" alt="Heatmap"
+            class="img-fluid">
+        </div>
       </div>
     </div>
   </div>
 
 </div>
+
 {% endblock %}

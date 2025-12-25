@@ -1,18 +1,169 @@
 {% extends "layout.html" %}
-{% block body %}
-<h3>Upload dataset (CSV)</h3>
-<form method="post" enctype="multipart/form-data">
-  <div class="mb-3">
-    <input type="file" name="file" accept=".csv" class="form-control" required>
-  </div>
-  <button class="btn btn-primary">Upload & Predict</button>
-</form>
 
+{% block body %}
+<!-- Page Header -->
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="fw-bold">Batch Analysis</h1>
+        <p class="lead">Upload patient datasets for comprehensive risk analysis</p>
+    </div>
+</div>
+
+<!-- Upload Form -->
+<div class="row mb-5">
+    <div class="col-lg-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Upload Dataset</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="alert alert-info mb-4">
+                    <p class="small mb-2"><strong>Dataset Requirements:</strong></p>
+                    <p class="small mb-0">Upload a CSV file with columns: Pregnancies, Glucose, BloodPressure,
+                        SkinThickness, Insulin, BMI, DiabetesPedigreeFunction, Age</p>
+                </div>
+
+                <form method="post" enctype="multipart/form-data" action="{{ url_for('upload') }}">
+                    <div class="mb-4">
+                        <label for="fileInput" class="form-label">Select CSV File</label>
+                        <input type="file" name="file" id="fileInput" class="form-control form-control-lg" accept=".csv"
+                            required>
+                        <div class="form-text">Supports large datasets for batch processing</div>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-success btn-lg">Analyze Dataset</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Results Section -->
 {% if result %}
-  <div class="card mt-4 p-3">
-    <p>Total records: <strong>{{ result.total }}</strong></p>
-    <p>Predicted diabetic: <strong>{{ result.predicted_diabetic }}</strong></p>
-    <p>Percentage: <strong>{{ result.percentage }}%</strong></p>
-  </div>
+<div class="row">
+    <div class="col-12">
+
+        <!-- Summary Statistics -->
+        <div class="row g-4 mb-5">
+            <div class="col-md-4">
+                <div class="stat-card">
+                    <p class="text-muted mb-1">Total Records</p>
+                    <div class="display-4">{{ result.total }}</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card">
+                    <p class="text-muted mb-1">At Risk</p>
+                    <div class="display-4">{{ result.predicted_diabetic }}</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card">
+                    <p class="text-muted mb-1">Risk Rate</p>
+                    <div class="display-4">{{ result.percentage }}%</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Major Effecting Factors -->
+        {% if result.feature_importance %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Major Risk Factors</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-lg-6">
+                        <p class="text-muted mb-3">Key features influencing predictions</p>
+                        {% for factor in result.feature_importance[:5] %}
+                        <div class="feature-item">
+                            <span class="fw-bold">{{ factor.feature }}</span>
+                            <span class="badge bg-primary">{{ factor.importance }}%</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="col-lg-6 text-center">
+                        {% if result.feature_plot %}
+                        <div class="graph-container">
+                            <img src="{{ result.feature_plot }}" class="img-fluid" alt="Feature Importance">
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Dataset Statistics -->
+        {% if result.statistics %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Dataset Statistics</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Feature</th>
+                                <th>Mean</th>
+                                <th>Median</th>
+                                <th>Std Dev</th>
+                                <th>Min</th>
+                                <th>Max</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for feature, stats in result.statistics.items() %}
+                            <tr>
+                                <td class="fw-bold">{{ feature }}</td>
+                                <td>{{ "%.2f"|format(stats.mean) }}</td>
+                                <td>{{ "%.2f"|format(stats.median) }}</td>
+                                <td>{{ "%.2f"|format(stats.std) }}</td>
+                                <td>{{ "%.2f"|format(stats.min) }}</td>
+                                <td>{{ "%.2f"|format(stats.max) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Visualizations -->
+        {% if result.distribution_plot %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Prediction Distribution</h5>
+            </div>
+            <div class="card-body text-center">
+                <div class="graph-container">
+                    <img src="{{ result.distribution_plot }}" class="img-fluid" alt="Distribution">
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Download Results -->
+        {% if result.csv_path %}
+        <div class="card mb-4">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="mb-1">Analysis Complete</h5>
+                    <p class="mb-0 text-muted">Download your results with predictions and probabilities</p>
+                </div>
+                <a href="{{ url_for('download_results', filename=result.csv_filename) }}"
+                    class="btn btn-primary btn-lg">
+                    Download Results
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
 {% endif %}
+
 {% endblock %}
