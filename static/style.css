@@ -373,6 +373,12 @@ p {
     max-width: 100%;
     height: auto;
     border-radius: var(--radius);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.graph-container img:hover {
+    transform: scale(1.01);
+    box-shadow: var(--shadow-md);
 }
 
 /* Unit Selector */
