@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import dice_ml
 from alibi.explainers import AnchorTabular
 from lime.lime_tabular import LimeTabularExplainer
+import shap
 
 EXPECTED_FEATURES = [
     "HighBP", "HighChol", "CholCheck", "BMI", "Smoker",
@@ -279,53 +280,71 @@ def generate_anchor_rule(model, X_raw, X_train_numpy, feature_names=EXPECTED_FEA
 
 def generate_shap_plot(model, scaler, X_raw, feature_names=EXPECTED_FEATURES):
     """
-    model: trained sklearn-like model (trained on scaled inputs)
-    scaler: fitted scaler (StandardScaler)
-    X_raw: 2D numpy array or DataFrame with original raw feature values (1 x n_features)
-    returns: relative path to saved PNG (e.g., static/shap_images/...)
+    Generate SHAP summary plot for a single instance.
     """
-    # Convert X_raw to numpy 2D
-    if isinstance(X_raw, pd.DataFrame):
-        X_raw_vals = X_raw.values
-    else:
-        X_raw_vals = np.array(X_raw)
-    # Scale (model trained on scaled)
-    X_scaled = scaler.transform(X_raw_vals)
-    # Use TreeExplainer on model
     try:
+        # 1. Scale input
+        if isinstance(X_raw, pd.DataFrame):
+            X_vals = X_raw.values
+        else:
+            X_vals = np.array(X_raw)
+        
+        X_scaled = scaler.transform(X_vals)
+        
+        # 2. Create Explainer (TreeExplainer for XGBoost)
+        # Note: In production, you might want to load a pre-computed explainer
         explainer = shap.TreeExplainer(model)
-        shap_vals = explainer.shap_values(X_scaled)
-    except Exception:
-        # Fallback newer API
-        explainer = shap.TreeExplainer(model)
-        shap_exp = explainer(X_scaled)
-        shap_vals = shap_exp.values
+        
+        # 3. Get Shap Values
+        shap_values = explainer.shap_values(X_scaled)
+        
+        # Handle different SHAP output formats (list for multiclass, array for binary)
+        if isinstance(shap_values, list):
+             vals = shap_values[0]
+             if len(shap_values) > 1:
+                 # IF binary, index 1 is usually the positive class
+                 vals = shap_values[1]
+        else:
+             vals = shap_values
 
-    # Convert to array of shape (n_samples, n_features)
-    shap_arr = np.array(shap_vals)
-    # For single sample:
-    idx = 0
-    vals = shap_arr[idx]
-    abs_vals = np.abs(vals)
-    order = np.argsort(abs_vals)[::-1]
-    top_n = min(len(feature_names), 8)
-    top_idx = order[:top_n]
-    top_feats = [feature_names[i] for i in top_idx]
-    top_vals = vals[top_idx]
+        # 4. Filter top features for plotting
+        if len(vals.shape) == 2:
+            vals = vals[0]
+            
+        df_shap = pd.DataFrame({
+            'feature': feature_names,
+            'shap_value': vals
+        })
+        # Add absolute value for sorting
+        df_shap['abs_val'] = df_shap['shap_value'].abs()
+        df_shap = df_shap.sort_values('abs_val', ascending=False).head(10)
+        
+        # 5. Plot
+        plt.figure(figsize=(8, 5))
+        # Horizontal bar chart
+        # Color: Red for positive (risk), Blue for negative (protective)
+        colors = ['#ff4d4d' if x > 0 else '#2ecc71' for x in df_shap['shap_value']]
+        
+        plt.barh(df_shap['feature'], df_shap['shap_value'], color=colors)
+        plt.xlabel("SHAP Value (Impact on Model Output)")
+        plt.title("Feature Impact for this Patient")
+        plt.axvline(x=0, color='black', linestyle='--', linewidth=0.8)
+        plt.gca().invert_yaxis() # Highest impact on top
+        plt.tight_layout()
+        
+        fname = f"shap_{int(time.time()*1000)}.png"
+        rel_path = os.path.join("static", "shap_images", fname)
+        plt.savefig(rel_path, bbox_inches="tight")
+        plt.close()
+        
+        return f"static/shap_images/{fname}"
+        
+    except Exception as e:
+        print(f"SHAP Error: {e}")
+        import traceback
+        traceback.print_exc()
+        return ""
 
-    plt.figure(figsize=(6,4))
-    # horizontal bar with sign
-    y_pos = range(len(top_feats))
-    plt.barh(list(reversed(top_feats)), list(reversed(top_vals)))
-    plt.xlabel("SHAP value (impact on model output)")
-    plt.title("SHAP - Top feature impacts")
-    plt.tight_layout()
-
-    fname = f"shap_{int(time.time()*1000)}.png"
-    rel_path = os.path.join("static", "shap_images", fname)
-    plt.savefig(rel_path, bbox_inches="tight")
-    plt.close()
-    return rel_path.replace("\\", "/")
 
 def generate_lime_plot(model, scaler, X_raw, training_df_raw, feature_names=EXPECTED_FEATURES, class_names=["NotDiabetic","Diabetic"]):
     """
