@@ -69,19 +69,7 @@
               </select>
             </div>
 
-            <div class="col-md-6">
-              <label class="form-label">Income Level</label>
-              <select name="Income" class="form-select" required>
-                <option value="1" {% if form_data.get('Income')=='1' %}selected{% endif %}>Less than $10,000</option>
-                <option value="2" {% if form_data.get('Income')=='2' %}selected{% endif %}>$10,000 - $15,000</option>
-                <option value="3" {% if form_data.get('Income')=='3' %}selected{% endif %}>$15,000 - $20,000</option>
-                <option value="4" {% if form_data.get('Income')=='4' %}selected{% endif %}>$20,000 - $25,000</option>
-                <option value="5" {% if form_data.get('Income')=='5' %}selected{% endif %}>$25,000 - $35,000</option>
-                <option value="6" {% if form_data.get('Income')=='6' %}selected{% endif %}>$35,000 - $50,000</option>
-                <option value="7" {% if form_data.get('Income')=='7' %}selected{% endif %}>$50,000 - $75,000</option>
-                <option value="8" {% if form_data.get('Income')=='8' %}selected{% endif %}>$75,000 or more</option>
-              </select>
-            </div>
+
 
             <!-- Health Indicators -->
             <div class="col-12 mt-4">

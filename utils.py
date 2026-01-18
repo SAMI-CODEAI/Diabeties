@@ -58,7 +58,11 @@ def single_input_to_df(form_dict):
 
     # extract all expected features
     for feat in EXPECTED_FEATURES:
-        row[feat] = get_val(feat)
+        # Use default value of 5 for Income (median income bracket) since it's not in the UI
+        if feat == "Income":
+            row[feat] = 5
+        else:
+            row[feat] = get_val(feat)
 
     # Special handling if needed (e.g. BMI calc if Height/Weight provided but BMI not)
     # The form will now simply provide BMI directly for simplicity given the new dataset
@@ -165,10 +169,6 @@ def generate_care_plan(row_dict, shap_values, proba_percent):
             "why": "Socioeconomic Correlation",
             "how": "Statistical models often find correlations between education levels and access to healthcare or health literacy."
         },
-        "Income": {
-            "why": "Resource Access",
-            "how": "Income levels statistically correlate with access to nutritious food, safe exercise environments, and preventative care."
-        },
          "HeartDiseaseorAttack": {
             "why": "Comorbidity",
             "how": "Prior cardiovascular events indicate an existing compromise in vascular health, which is closely linked to diabetes pathology."
@@ -225,8 +225,12 @@ def generate_care_plan(row_dict, shap_values, proba_percent):
         plan["actions"].append("Prioritize maintaining your current healthy preventive habits.")
 
     # 5. Key Factors Analysis (The Why & How)
-    # Mention top features regardless of modifiability
-    for feat, score in top_risks[:4]: # Show top 4
+    # Mention top features regardless of modifiability, but exclude Income
+    for feat, score in top_risks[:5]: # Check top 5 to ensure we get 4 after filtering
+        # Skip Income - don't show it in the UI
+        if feat == "Income":
+            continue
+            
         val = row_dict.get(feat, "?")
         exp = EXPLANATIONS.get(feat, {"why": "Risk Factor", "how": "This factor statistically increases the probability of a diagnosis."})
         
@@ -239,6 +243,10 @@ def generate_care_plan(row_dict, shap_values, proba_percent):
             "why": exp["why"],
             "how": exp["how"]
         })
+        
+        # Stop once we have 4 factors (excluding Income)
+        if len(plan["key_factors"]) >= 4:
+            break
 
     return plan
 
@@ -452,8 +460,11 @@ def generate_feature_importance_plot(feature_importance, top_n=8):
     Returns relative path to saved image.
     """
     try:
-        # Take top N features
-        top_features = feature_importance[:top_n]
+        # Filter out Income from the list
+        filtered_importance = [f for f in feature_importance if f['feature'] != 'Income']
+        
+        # Take top N features from filtered list
+        top_features = filtered_importance[:top_n]
         features = [f['feature'] for f in top_features]
         importances = [f['importance'] for f in top_features]
         
