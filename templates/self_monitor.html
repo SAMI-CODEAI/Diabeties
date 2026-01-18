@@ -6,33 +6,6 @@
   <div class="col">
     <h1 class="display-5 fw-bold"><i class="bi bi-activity me-3" style="color: var(--accent-teal);"></i>Personal Risk
       Assessment</h1>
-    <p class="lead text-muted">Analyze your diabetes risk using lab reports or manual entry</p>
-  </div>
-</div>
-
-<!-- PDF Upload Option -->
-<div class="row mb-4">
-  <div class="col-lg-10 mx-auto">
-    <div class="card fade-in-up">
-      <div class="card-header">
-        <h5 class="mb-0"><i class="bi bi-file-earmark-medical me-2"></i>Upload Lab Report (PDF)</h5>
-      </div>
-      <div class="card-body">
-        <form action="{{ url_for('upload_pdf') }}" method="post" enctype="multipart/form-data"
-          class="row g-3 align-items-end">
-          <div class="col-md-9">
-            <label class="form-label">Select PDF File</label>
-            <input type="file" name="pdf_file" class="form-control" accept=".pdf" required>
-            <div class="form-text">We'll extract glucose, blood pressure, and BMI automatically</div>
-          </div>
-          <div class="col-md-3">
-            <button type="submit" class="btn btn-primary w-100">
-              <i class="bi bi-magic me-1"></i>Auto-Fill
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
   </div>
 </div>
 
@@ -41,155 +14,218 @@
   <div class="col-lg-10 mx-auto">
     <div class="card fade-in-up">
       <div class="card-header">
-        <h5 class="mb-0"><i class="bi bi-clipboard2-pulse me-2"></i>Manual Entry Form</h5>
+        <h5 class="mb-0"><i class="bi bi-clipboard2-pulse me-2"></i>Health Survey</h5>
       </div>
       <div class="card-body p-4">
 
         <form method="post" action="{{ url_for('self_monitor') }}">
           <div class="row g-4">
 
-            <!-- Basic Information Section -->
+            <!-- Demographics -->
             <div class="col-12">
-              <h6 class="fw-bold text-uppercase mb-3" style="color: var(--primary-blue); letter-spacing: 0.05em;">
-                <i class="bi bi-person-badge me-2"></i>Basic Information
+              <h6 class="fw-bold text-uppercase mb-3 text-primary"><i class="bi bi-person-badge me-2"></i>Demographics
               </h6>
             </div>
 
-            <div class="col-md-4">
-              <label class="form-label">Age</label>
-              <div class="input-group">
-                <input type="number" name="Age" class="form-control" value="{{ form_data.get('Age', '') }}" required>
-                <span class="input-group-text">years</span>
-              </div>
-            </div>
-
-            <div class="col-md-4">
-              <label class="form-label">Gender</label>
-              <select id="genderSelect" class="form-select" onchange="toggle Pregnancy()">
-                <option value="female" {% if form_data.get('Gender')=='Female' %}selected{% endif %}>Female</option>
-                <option value="male" {% if form_data.get('Gender')=='Male' %}selected{% endif %}>Male</option>
+            <div class="col-md-6">
+              <label class="form-label">Age Group</label>
+              <select name="Age" class="form-select" required>
+                <!-- BRFSS Age Categories: 1=18-24 ... 13=80+ -->
+                <option value="1" {% if form_data.get('Age')=='1' %}selected{% endif %}>18-24</option>
+                <option value="2" {% if form_data.get('Age')=='2' %}selected{% endif %}>25-29</option>
+                <option value="3" {% if form_data.get('Age')=='3' %}selected{% endif %}>30-34</option>
+                <option value="4" {% if form_data.get('Age')=='4' %}selected{% endif %}>35-39</option>
+                <option value="5" {% if form_data.get('Age')=='5' %}selected{% endif %}>40-44</option>
+                <option value="6" {% if form_data.get('Age')=='6' %}selected{% endif %}>45-49</option>
+                <option value="7" {% if form_data.get('Age')=='7' %}selected{% endif %}>50-54</option>
+                <option value="8" {% if form_data.get('Age')=='8' %}selected{% endif %}>55-59</option>
+                <option value="9" {% if form_data.get('Age')=='9' %}selected{% endif %}>60-64</option>
+                <option value="10" {% if form_data.get('Age')=='10' %}selected{% endif %}>65-69</option>
+                <option value="11" {% if form_data.get('Age')=='11' %}selected{% endif %}>70-74</option>
+                <option value="12" {% if form_data.get('Age')=='12' %}selected{% endif %}>75-79</option>
+                <option value="13" {% if form_data.get('Age')=='13' %}selected{% endif %}>80+</option>
               </select>
             </div>
 
-            <div class="col-md-4" id="pregDiv">
-              <label class="form-label">Pregnancies</label>
-              <div class="input-group">
-                <input type="number" name="Pregnancies" class="form-control"
-                  value="{{ form_data.get('Pregnancies', '0') }}">
-                <span class="input-group-text">count</span>
-              </div>
-            </div>
-
-            <!-- Body Metrics Section -->
-            <div class="col-12 mt-5">
-              <h6 class="fw-bold text-uppercase mb-3" style="color: var(--primary-blue); letter-spacing: 0.05em;">
-                <i class="bi bi-rulers me-2"></i>Body Measurements
-              </h6>
-            </div>
-
-            <div class="col-md-4">
-              <label class="form-label">Height</label>
-              <div class="input-group">
-                <input type="number" step="0.1" name="Height" id="heightInput" class="form-control"
-                  value="{{ form_data.get('Height', '') }}" oninput="convertHeight(); calcBMI();">
-                <select class="unit-selector" id="heightUnit" onchange="convertHeight(); calcBMI();">
-                  <option value="cm">cm</option>
-                  <option value="m">meters</option>
-                  <option value="in">inches</option>
-                  <option value="ft">feet</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="col-md-4">
-              <label class="form-label">Weight</label>
-              <div class="input-group">
-                <input type="number" step="0.1" name="Weight" id="weightInput" class="form-control"
-                  value="{{ form_data.get('Weight', '') }}" oninput="convertWeight(); calcBMI();">
-                <select class="unit-selector" id="weightUnit" onchange="convertWeight(); calcBMI();">
-                  <option value="kg">kg</option>
-                  <option value="g">grams</option>
-                  <option value="lb">pounds</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="col-md-4">
-              <label class="form-label">BMI (Auto-calculated)</label>
-              <div class="input-group">
-                <input type="number" step="0.1" name="BMI" id="bmiInput" class="form-control"
-                  value="{{ form_data.get('BMI', '') }}" readonly style="background: var(--neutral-100);">
-                <span class="input-group-text">kg/m²</span>
-              </div>
-            </div>
-
-            <!-- Lab Values Section -->
-            <div class="col-12 mt-5">
-              <h6 class="fw-bold text-uppercase mb-3" style="color: var(--primary-blue); letter-spacing: 0.05em;">
-                <i class="bi bi-droplet-half me-2"></i>Laboratory Values
-              </h6>
+            <div class="col-md-6">
+              <label class="form-label">Sex</label>
+              <select name="Sex" class="form-select" required>
+                <option value="0" {% if form_data.get('Sex')=='0' %}selected{% endif %}>Female</option>
+                <option value="1" {% if form_data.get('Sex')=='1' %}selected{% endif %}>Male</option>
+              </select>
             </div>
 
             <div class="col-md-6">
-              <label class="form-label">Blood Glucose <span class="text-danger">*</span></label>
-              <div class="input-group">
-                <input type="number" step="0.1" name="Glucose" id="glucoseInput" class="form-control"
-                  value="{{ form_data.get('Glucose', '') }}" oninput="convertGlucose()" required>
-                <select class="unit-selector" id="glucoseUnit" onchange="convertGlucose()">
-                  <option value="mg/dL">mg/dL</option>
-                  <option value="mmol/L">mmol/L</option>
-                </select>
-              </div>
-              <div class="form-text">Normal fasting: 70-100 mg/dL</div>
+              <label class="form-label">Education Level</label>
+              <select name="Education" class="form-select" required>
+                <option value="1" {% if form_data.get('Education')=='1' %}selected{% endif %}>Never attended school
+                </option>
+                <option value="2" {% if form_data.get('Education')=='2' %}selected{% endif %}>Elementary only</option>
+                <option value="3" {% if form_data.get('Education')=='3' %}selected{% endif %}>Some high school</option>
+                <option value="4" {% if form_data.get('Education')=='4' %}selected{% endif %}>High school graduate
+                </option>
+                <option value="5" {% if form_data.get('Education')=='5' %}selected{% endif %}>Some college</option>
+                <option value="6" {% if form_data.get('Education')=='6' %}selected{% endif %}>College graduate</option>
+              </select>
             </div>
 
-            <div class="col-md-6">
-              <label class="form-label">Blood Pressure (Diastolic)</label>
-              <div class="input-group">
-                <input type="number" step="1" name="BloodPressure" id="bpInput" class="form-control"
-                  value="{{ form_data.get('BloodPressure', '') }}" oninput="convertBP()">
-                <select class="unit-selector" id="bpUnit" onchange="convertBP()">
-                  <option value="mmHg">mm Hg</option>
-                  <option value="kPa">kPa</option>
-                </select>
-              </div>
-              <div class="form-text">Normal: 60-80 mm Hg</div>
-            </div>
 
-            <!-- Advanced Fields (Collapsible) -->
+
+            <!-- Health Indicators -->
             <div class="col-12 mt-4">
-              <a class="btn btn-link text-decoration-none p-0" data-bs-toggle="collapse" href="#advancedFields">
-                <i class="bi bi-plus-circle me-2"></i>Advanced Clinical Parameters (Optional)
-              </a>
+              <h6 class="fw-bold text-uppercase mb-3 text-primary"><i class="bi bi-heart-pulse me-2"></i>Health
+                Indicators</h6>
             </div>
 
-            <div class="collapse row g-3" id="advancedFields">
-              <div class="col-12">
-                <div class="alert alert-info">
-                  <small><i class="bi bi-info-circle me-2"></i>Leave blank to use population averages</small>
-                </div>
-              </div>
-              <div class="col-md-4">
-                <label class="form-label">Skin Thickness</label>
-                <div class="input-group">
-                  <input type="number" name="SkinThickness" class="form-control"
-                    value="{{ form_data.get('SkinThickness', '') }}">
-                  <span class="input-group-text">mm</span>
-                </div>
-              </div>
-              <div class="col-md-4">
-                <label class="form-label">Insulin Level</label>
-                <div class="input-group">
-                  <input type="number" name="Insulin" class="form-control" value="{{ form_data.get('Insulin', '') }}">
-                  <span class="input-group-text">μU/mL</span>
-                </div>
-              </div>
-              <div class="col-md-4">
-                <label class="form-label">Diabetes Pedigree Function</label>
-                <input type="number" step="0.001" name="DiabetesPedigreeFunction" class="form-control"
-                  value="{{ form_data.get('DiabetesPedigreeFunction', '') }}">
-              </div>
+            <div class="col-md-4">
+              <label class="form-label">High Blood Pressure?</label>
+              <select name="HighBP" class="form-select">
+                <option value="0" {% if form_data.get('HighBP')=='0' %}selected{% endif %}>No</option>
+                <option value="1" {% if form_data.get('HighBP')=='1' %}selected{% endif %}>Yes</option>
+              </select>
             </div>
+
+            <div class="col-md-4">
+              <label class="form-label">High Cholesterol?</label>
+              <select name="HighChol" class="form-select">
+                <option value="0" {% if form_data.get('HighChol')=='0' %}selected{% endif %}>No</option>
+                <option value="1" {% if form_data.get('HighChol')=='1' %}selected{% endif %}>Yes</option>
+              </select>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">Cholesterol Check (Last 5y)?</label>
+              <select name="CholCheck" class="form-select">
+                <option value="1" {% if form_data.get('CholCheck')=='1' %}selected{% endif %}>Yes</option>
+                <option value="0" {% if form_data.get('CholCheck')=='0' %}selected{% endif %}>No</option>
+              </select>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">BMI</label>
+              <input type="number" step="0.1" name="BMI" class="form-control" value="{{ form_data.get('BMI', '25.0') }}"
+                required>
+              <small class="text-muted">Body Mass Index</small>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">Smoker (>= 100 cigs lifetime)?</label>
+              <select name="Smoker" class="form-select">
+                <option value="0" {% if form_data.get('Smoker')=='0' %}selected{% endif %}>No</option>
+                <option value="1" {% if form_data.get('Smoker')=='1' %}selected{% endif %}>Yes</option>
+              </select>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">Stroke History?</label>
+              <select name="Stroke" class="form-select">
+                <option value="0" {% if form_data.get('Stroke')=='0' %}selected{% endif %}>No</option>
+                <option value="1" {% if form_data.get('Stroke')=='1' %}selected{% endif %}>Yes</option>
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Heart Disease or Attack?</label>
+              <select name="HeartDiseaseorAttack" class="form-select">
+                <option value="0" {% if form_data.get('HeartDiseaseorAttack')=='0' %}selected{% endif %}>No</option>
+                <option value="1" {% if form_data.get('HeartDiseaseorAttack')=='1' %}selected{% endif %}>Yes</option>
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Difficulty Walking?</label>
+              <select name="DiffWalk" class="form-select">
+                <option value="0" {% if form_data.get('DiffWalk')=='0' %}selected{% endif %}>No</option>
+                <option value="1" {% if form_data.get('DiffWalk')=='1' %}selected{% endif %}>Yes</option>
+              </select>
+            </div>
+
+            <!-- Lifestyle -->
+            <div class="col-12 mt-4">
+              <h6 class="fw-bold text-uppercase mb-3 text-primary"><i class="bi bi-bicycle me-2"></i>Lifestyle & General
+                Health</h6>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">Physical Activity (Past 30 days)?</label>
+              <select name="PhysActivity" class="form-select">
+                <option value="1" {% if form_data.get('PhysActivity')=='1' %}selected{% endif %}>Yes</option>
+                <option value="0" {% if form_data.get('PhysActivity')=='0' %}selected{% endif %}>No</option>
+              </select>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">Consumes Fruits Daily?</label>
+              <select name="Fruits" class="form-select">
+                <option value="1" {% if form_data.get('Fruits')=='1' %}selected{% endif %}>Yes</option>
+                <option value="0" {% if form_data.get('Fruits')=='0' %}selected{% endif %}>No</option>
+              </select>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">Consumes Veggies Daily?</label>
+              <select name="Veggies" class="form-select">
+                <option value="1" {% if form_data.get('Veggies')=='1' %}selected{% endif %}>Yes</option>
+                <option value="0" {% if form_data.get('Veggies')=='0' %}selected{% endif %}>No</option>
+              </select>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">Heavy Alcohol Consumption?</label>
+              <select name="HvyAlcoholConsump" class="form-select">
+                <option value="0" {% if form_data.get('HvyAlcoholConsump')=='0' %}selected{% endif %}>No</option>
+                <option value="1" {% if form_data.get('HvyAlcoholConsump')=='1' %}selected{% endif %}>Yes</option>
+              </select>
+              <div class="form-text">Adult men >= 14 drinks/week, women >= 7</div>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">General Health (1=Excellent, 5=Poor)</label>
+              <select name="GenHlth" class="form-select" required>
+                <option value="1" {% if form_data.get('GenHlth')=='1' %}selected{% endif %}>1 - Excellent</option>
+                <option value="2" {% if form_data.get('GenHlth')=='2' %}selected{% endif %}>2 - Very Good</option>
+                <option value="3" {% if form_data.get('GenHlth')=='3' %}selected{% endif %}>3 - Good</option>
+                <option value="4" {% if form_data.get('GenHlth')=='4' %}selected{% endif %}>4 - Fair</option>
+                <option value="5" {% if form_data.get('GenHlth')=='5' %}selected{% endif %}>5 - Poor</option>
+              </select>
+            </div>
+
+            <div class="col-md-4"></div>
+
+            <div class="col-md-6">
+              <label class="form-label">Days Mental Health Not Good (Last 30 days)</label>
+              <input type="number" name="MentHlth" class="form-control" min="0" max="30"
+                value="{{ form_data.get('MentHlth', '0') }}">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Days Physical Health Not Good (Last 30 days)</label>
+              <input type="number" name="PhysHlth" class="form-control" min="0" max="30"
+                value="{{ form_data.get('PhysHlth', '0') }}">
+            </div>
+
+            <!-- Healthcare Access -->
+            <div class="col-12 mt-4">
+              <h6 class="fw-bold text-uppercase mb-3 text-primary"><i class="bi bi-hospital me-2"></i>Healthcare Access
+              </h6>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Any Healthcare Coverage?</label>
+              <select name="AnyHealthcare" class="form-select">
+                <option value="1" {% if form_data.get('AnyHealthcare')=='1' %}selected{% endif %}>Yes</option>
+                <option value="0" {% if form_data.get('AnyHealthcare')=='0' %}selected{% endif %}>No</option>
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Could Not See Doctor Due to Cost?</label>
+              <select name="NoDocbcCost" class="form-select">
+                <option value="0" {% if form_data.get('NoDocbcCost')=='0' %}selected{% endif %}>No</option>
+                <option value="1" {% if form_data.get('NoDocbcCost')=='1' %}selected{% endif %}>Yes</option>
+              </select>
+            </div>
+
 
             <!-- Submit Button -->
             <div class="col-12 mt-5">
@@ -207,92 +243,184 @@
 </div>
 
 <!-- Results Section -->
+<!-- Results Section -->
 {% if prediction %}
 <div class="row fade-in-up">
-  <div class="col-lg-10 mx-auto">
-    <div class="card"
-      style="border: 2px solid {{ 'var(--medical-red)' if prediction.label == 'Diabetic' else 'var(--accent-green)' }};">
-      <div class="card-header text-white text-center py-4"
-        style="background: {{ 'var(--gradient-primary)' if prediction.label != 'Diabetic' else 'linearгradient(135deg, #E63946 0%, #F77F00 100%)' }};">
-        <h3 class="mb-2"><i class="bi bi-clipboard-check me-2"></i>Risk Assessment Results</h3>
-      </div>
-      <div class="card-body p-4">
+  <div class="col-lg-12 mx-auto">
+    <!-- Main Result Card -->
+    <div class="card mb-4"
+      style="border-top: 5px solid {{ 'var(--medical-red)' if prediction.label == 'Diabetic' else 'var(--accent-green)' }};">
+      <div class="card-body p-5">
 
-        <!-- Status Banner -->
-        <div class="text-center mb-5 p-4" style="background: var(--gradient-subtle); border-radius: var(--radius-md);">
-          <h1 class="display-2 fw-bold mb-3"
-            style="color: {{ 'var(--medical-red)' if prediction.label == 'Diabetic' else 'var(--accent-green)' }};">
-            {{ prediction.label }}
-          </h1>
-          <p class="lead mb-2">Risk Probability: <span class="fw-bold" style="color: var(--primary-blue);">{{
-              prediction.probability }}%</span></p>
-          <div
-            class="alert {{ 'alert-danger' if prediction.probability > 50 else 'alert-success' }} d-inline-block mb-0">
-            <i
-              class="bi bi-{{ 'exclamation-triangle-fill' if prediction.probability > 50 else 'check-circle-fill' }} me-2"></i>
-            {{ care_plan.summary }}
+        <!-- Header -->
+        <div class="text-center mb-5">
+          <h2 class="fw-bold mb-2">Clinical Assessment Report</h2>
+        </div>
+
+        <div class="row align-items-center mb-5">
+          <!-- RISK DIAL (Gauge Chart) -->
+          <div class="col-md-4 text-center border-end">
+            <h5 class="text-muted mb-3">Estimated Risk Probability</h5>
+
+            <!-- CSS Gauge implementation -->
+            <div class="position-relative mx-auto" style="width: 220px; height: 130px;">
+              <div class="gauge-wrapper mx-auto"
+                style="position: relative; width: 220px; height: 110px; overflow: hidden;">
+
+                <!-- Gradient Background (Green -> Yellow -> Red) -->
+                <div class="gauge-bg" style="
+                        width: 220px; height: 110px; 
+                        background: linear-gradient(90deg, #2ecc71 0%, #f1c40f 50%, #e74c3c 100%); 
+                        border-radius: 110px 110px 0 0;
+                        opacity: 0.9;
+                   "></div>
+
+                <!-- White Overlay for Arc Effect (Optional for arc thickness) -->
+                <div class="gauge-overlay" style="
+                        position: absolute; bottom: 0; left: 30px; width: 160px; height: 80px; 
+                        background: white; border-radius: 80px 80px 0 0;
+                        z-index: 1;
+                   "></div>
+
+                <!-- Needle/Pointer -->
+                <div class="gauge-needle" style="
+                        position: absolute; 
+                        bottom: 0; 
+                        left: 108px; /* Center (110) - half width (2) = 108 */
+                        width: 4px; 
+                        height: 105px; 
+                        background: #333; 
+                        border-radius: 4px 4px 0 0;
+                        transform-origin: bottom center; 
+                        transform: rotate({{ (prediction.probability / 100 * 180) - 90 }}deg);
+                        transition: transform 1.5s cubic-bezier(0.2, 0.8, 0.2, 1.0);
+                        z-index: 2;
+                   "></div>
+
+                <!-- Needle Base (Center Dot) -->
+                <div style="
+                        position: absolute; bottom: -8px; left: 102px; 
+                        width: 16px; height: 16px; 
+                        background: #333; border-radius: 50%; 
+                        z-index: 3;
+                   "></div>
+
+              </div>
+
+              <!-- Value Display -->
+              <div class="text-center mt-2" style="position: relative; z-index: 4; top: -25px;">
+                <h2 class="mb-0 fw-bold" style="font-size: 2.2rem; color: #333;">
+                  {{ prediction.probability }}<span style="font-size: 1rem;">%</span>
+                </h2>
+              </div>
+
+              <!-- Labels -->
+              <span
+                style="position: absolute; bottom: 25px; left: 0; font-size: 0.85rem; font-weight: bold; color: #666;">0%</span>
+              <span
+                style="position: absolute; bottom: 25px; right: 0; font-size: 0.85rem; font-weight: bold; color: #666;">100%</span>
+            </div>
+            <p class="mt-2 fw-bold"
+              style="color: {{ 'var(--medical-red)' if prediction.label == 'Diabetic' else 'var(--accent-green)' }}">
+              {{ prediction.label }}
+            </p>
+          </div>
+
+          <!-- SHAP (The 'Why') -->
+          <div class="col-md-8 ps-md-5">
+            <h5 class="fw-bold mb-3 text-primary"><i class="bi bi-graph-up-arrow me-2"></i>Analysis: Key Drivers</h5>
+            <p class="text-muted mb-4 small">These factors contributed most significantly to the calculated risk score.
+            </p>
+
+            <div class="row g-3">
+              {% for item in care_plan.key_factors %}
+              <div class="col-12">
+                <div class="card border-0 bg-light shadow-sm">
+                  <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                      <h6 class="fw-bold mb-0 text-dark">{{ item.factor }} <span
+                          class="text-muted fw-normal ms-2">(Value: {{ item.value }})</span></h6>
+                      <span class="badge {{ 'bg-success' if item.label == 'Modifiable' else 'bg-secondary' }}">{{
+                        item.label }}</span>
+                    </div>
+                    <p class="mb-1 small text-dark"><strong>Why:</strong> {{ item.why }}</p>
+                    <p class="mb-0 small text-muted"><strong>How:</strong> {{ item.how }}</p>
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
           </div>
         </div>
 
-        <div class="row g-4">
-          <!-- Left: Key Factors -->
-          <div class="col-lg-7">
-            <h5 class="fw-bold mb-3 pb-2" style="border-bottom: 2px solid var(--primary-blue);">
-              <i class="bi bi-lightbulb me-2" style="color: var(--warning-amber);"></i>Key Contributing Factors
-            </h5>
+        <hr class="my-5">
 
-            {% for item in care_plan.key_factors %}
-            <div class="feature-item">
-              <div class="flex-grow-1">
-                <div class="fw-bold mb-1">{{ item.factor }}</div>
-                <small class="text-muted">{{ item.action }}</small>
-              </div>
+        <div class="row">
+          <!-- ACTION PLAN (DiCE) -->
+          <div class="col-md-7">
+            <h4 class="fw-bold mb-4 text-success"><i class="bi bi-check2-circle me-2"></i>Recommended Action Plan</h4>
+
+            <div class="alert alert-light border-start border-success border-4 shadow-sm">
+              <h6 class="fw-bold text-success mb-2">Primary Lifestyle Modifications</h6>
+              {% if care_plan.actions %}
+              <ul class="mb-0 list-unstyled">
+                {% for action in care_plan.actions %}
+                <li class="mb-2">{{ action }}</li>
+                {% endfor %}
+              </ul>
+              {% else %}
+              <p class="mb-0">Maintain current healthy habits.</p>
+              {% endif %}
             </div>
-            {% endfor %}
 
-            <!-- Technical Analysis (Accordion) -->
-            <div class="mt-4">
-              <a class="btn btn-link text-decoration-none p-0" data-bs-toggle="collapse" href="#techAnalysis">
-                <i class="bi bi-graph-up me-2"></i>View Technical XAI Analysis
-              </a>
-              <div class="collapse mt-3" id="techAnalysis">
-                <div class="row g-4">
-                  <div class="col-12">
-                    <div class="graph-container">
-                      <h6 class="fw-bold mb-3">SHAP Values</h6>
-                      {% if shap_img %}<img src="{{ shap_img }}" class="img-fluid"
-                        style="max-width: 100%; height: auto; min-height: 400px;">{% endif %}
+          </div>
+
+          <!-- STATIC FACTORS -->
+          <div class="col-md-5">
+            <div class="bg-light p-4 rounded h-100">
+              <h6 class="fw-bold text-muted mb-3"><i class="bi bi-info-circle me-2"></i>Non-Modifiable Factors</h6>
+              <p class="small text-muted mb-0">
+                Note: Certain baseline factors like Age, Genetics, and History contribute to your risk score but cannot
+                be changed.
+                Your personalized plan focuses only on <strong>modifiable lifestyle levers</strong> (Diet, Exercise,
+                Habits).
+              </p>
+
+              <div class="mt-4">
+                <h6 class="fw-bold text-dark mb-2">Visual Explanations</h6>
+                <!-- Technical Analysis (Accordion) -->
+                <div class="accordion" id="xaiAccordion">
+                  <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingOne">
+                      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#collapseOne">
+                        SHAP Waterfall Plot
+                      </button>
+                    </h2>
+                    <div id="collapseOne" class="accordion-collapse collapse" data-bs-parent="#xaiAccordion">
+                      <div class="accordion-body text-center">
+                        {% if shap_img %}<img src="{{ shap_img }}" class="img-fluid rounded shadow-sm">{% else %}No plot
+                        available{% endif %}
+                      </div>
                     </div>
                   </div>
-                  <div class="col-12">
-                    <div class="graph-container">
-                      <h6 class="fw-bold mb-3">LIME Explanation</h6>
-                      {% if lime_img %}<img src="{{ lime_img }}" class="img-fluid"
-                        style="max-width: 100%; height: auto; min-height: 400px;">{% endif %}
+                  <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingTwo">
+                      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#collapseTwo">
+                        LIME Local Explanation
+                      </button>
+                    </h2>
+                    <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#xaiAccordion">
+                      <div class="accordion-body text-center">
+                        {% if lime_img %}<img src="{{ lime_img }}" class="img-fluid rounded shadow-sm">{% else %}No plot
+                        available{% endif %}
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
 
-          <!-- Right: Action Plan -->
-          <div class="col-lg-5">
-            <div class="card h-100" style="background: var(--gradient-primary); color: var(--white);">
-              <div class="card-body">
-                <h5 class="fw-bold mb-4"><i class="bi bi-list-check me-2"></i>Recommended Actions</h5>
-                <ol class="mb-0" style="line-height: 2;">
-                  {% for item in care_plan.key_factors[:3] %}
-                  <li class="mb-3">{{ item.action }}</li>
-                  {% endfor %}
-                  <li class="mb-0">Consult a healthcare professional for comprehensive diagnosis and personalized care
-                    plan.</li>
-                </ol>
-              </div>
-              <div class="card-footer border-0" style="background: rgba(255,255,255,0.1);">
-                <small class="opacity-90"><i class="bi bi-info-circle me-1"></i>This is an AI screening tool, not a
-                  medical diagnosis.</small>
-              </div>
             </div>
           </div>
         </div>
@@ -303,86 +431,4 @@
 </div>
 {% endif %}
 
-{% endblock %}
-
-{% block scripts %}
-<script>
-  // Unit Conversion Functions
-  let heightCm = 0, weightKg = 0;
-
-  function togglePregnancy() {
-    const gender = document.getElementById("genderSelect").value;
-    const div = document.getElementById("pregDiv");
-    if (gender === "male") {
-      div.style.display = "none";
-      document.querySelector("[name='Pregnancies']").value = 0;
-    } else {
-      div.style.display = "block";
-    }
-  }
-
-  function convertHeight() {
-    const input = parseFloat(document.getElementById("heightInput").value) || 0;
-    const unit = document.getElementById("heightUnit").value;
-
-    // Convert to cm
-    switch (unit) {
-      case "m": heightCm = input * 100; break;
-      case "in": heightCm = input * 2.54; break;
-      case "ft": heightCm = input * 30.48; break;
-      default: heightCm = input;
-    }
-  }
-
-  function convertWeight() {
-    const input = parseFloat(document.getElementById("weightInput").value) || 0;
-    const unit = document.getElementById("weightUnit").value;
-
-    // Convert to kg
-    switch (unit) {
-      case "g": weightKg = input / 1000; break;
-      case "lb": weightKg = input * 0.453592; break;
-      default: weightKg = input;
-    }
-  }
-
-  function calcBMI() {
-    convertHeight();
-    convertWeight();
-
-    if (heightCm > 0 && weightKg > 0) {
-      const heightM = heightCm / 100;
-      const bmi = weightKg / (heightM * heightM);
-      document.getElementById("bmiInput").value = bmi.toFixed(1);
-    }
-  }
-
-  function convertGlucose() {
-    const input = parseFloat(document.getElementById("glucoseInput").value) || 0;
-    const unit = document.getElementById("glucoseUnit").value;
-    const glucoseInput = document.getElementById("glucoseInput");
-
-    // Store in mg/dL (model expects mg/dL)
-    if (unit === "mmol/L") {
-      // Convert mmol/L to mg/dL for model
-      const mgdl = input * 18.0182;
-      // We update a hidden field or just convert back when submitting
-    }
-  }
-
-  function convertBP() {
-    const input = parseFloat(document.getElementById("bpInput").value) || 0;
-    const unit = document.getElementById("bpUnit").value;
-
-    // Store in mmHg (model expects mmHg)
-    if (unit === "kPa") {
-      const mmHg = input * 7.50062;
-    }
-  }
-
-  // Initialize
-  document.addEventListener('DOMContentLoaded', function () {
-    togglePregnancy();
-  });
-</script>
 {% endblock %}

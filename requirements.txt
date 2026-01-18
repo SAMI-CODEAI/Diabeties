@@ -4,6 +4,8 @@ scikit-learn==1.3.2
 xgboost==2.0.0
 shap==0.42.1
 lime==0.2.0.1
+dice-ml
+alibi
 joblib==1.3.2
 matplotlib==3.8.0
 werkzeug==2.3.7

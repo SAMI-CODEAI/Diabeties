@@ -34,7 +34,7 @@ from utils import (EXPECTED_FEATURES, validate_and_prepare_df,
                    generate_shap_plot, generate_lime_plot,
                    analyze_dataset_features, generate_feature_importance_plot,
                    generate_distribution_plot, calculate_dataset_statistics,
-                   save_predictions_csv)
+                   save_predictions_csv, generate_dice_bcf, generate_anchor_rule)
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
@@ -44,7 +44,7 @@ DB_PATH = "users.db"
 MODEL_DIR = "models"
 SCALER_PATH = os.path.join(MODEL_DIR, "scaler.pkl")
 MODEL_PATH = os.path.join(MODEL_DIR, "xgb_model.pkl")
-TRAIN_CSV_PATH = os.path.join("data", "pima_diabetes.csv")
+TRAIN_CSV_PATH = os.path.join(MODEL_DIR, "train_data_sample.csv")
 
 # Create DB if missing
 def init_db():
@@ -100,7 +100,7 @@ if not os.path.exists(TRAIN_CSV_PATH):
 train_df_raw = pd.read_csv(TRAIN_CSV_PATH)
 train_df_raw = train_df_raw.rename(columns=lambda c: c.strip())
 # Validate training df columns
-missing = [c for c in EXPECTED_FEATURES + ["Outcome"] if c not in train_df_raw.columns]
+missing = [c for c in EXPECTED_FEATURES + ["Diabetes_binary"] if c not in train_df_raw.columns]
 if missing:
     raise ValueError(f"Training CSV missing expected columns: {missing}")
 # drop rows with NaNs in expected features for LIME creation
@@ -246,6 +246,8 @@ def self_monitor():
     care_plan = None
     shap_img = None
     lime_img = None
+    dice_exp = None
+    anchor_rule = None
     form_data = {} # To keep input values
     
     if request.method == "POST":
@@ -260,33 +262,53 @@ def self_monitor():
             prob_pct = round(prob * 100, 2)
             prediction = {"probability": prob_pct, "label": "Diabetic" if pred_label == 1 else "Not Diabetic"}
             
-            # Helper for care plan and plots
-            # Generate SHAP plot (expects model trained on scaled input; we pass raw but internal scales)
-            shap_rel = generate_shap_plot(model, scaler, X_raw, feature_names=EXPECTED_FEATURES)
-            shap_img = "/" + shap_rel
+            # Care Plan (Critical)
+            try:
+                import shap
+                ex = shap.TreeExplainer(model)
+                shap_vals = ex.shap_values(X_scaled)
+                care_plan = generate_care_plan(df_valid.iloc[0].to_dict(), shap_vals, prob_pct)
+            except Exception as e:
+                print(f"Error generating care plan: {e}")
+                # If care plan fails, we can't show full results, so let it bubble to main except OR provide dummy
+                raise e
 
-            # Generate LIME plot
-            lime_rel = generate_lime_plot(model, scaler, X_raw, train_df_raw, feature_names=EXPECTED_FEATURES)
-            lime_img = "/" + lime_rel
-            
-            # Generate Text Explanation (Needs SHAP values)
-            import shap
-            # We need to recreate explainer or use one if cached. 
-            # Given we just ran generate_shap_plot, it computed shap values there but didn't return them.
-            # We will just recompute quickly.
-            ex = shap.TreeExplainer(model)
-            shap_vals = ex.shap_values(X_scaled)
-            
-            care_plan = generate_care_plan(df_valid.iloc[0].to_dict(), shap_vals, prob_pct)
+            # Auxiliary XAI (Non-Critical) - failures here shouldn't stop the prediction showing
+            try:
+                shap_rel = generate_shap_plot(model, scaler, X_raw, feature_names=EXPECTED_FEATURES)
+                shap_img = "/" + shap_rel
+            except Exception as e:
+                print(f"SHAP Plot Error: {e}")
+
+            try:
+                lime_rel = generate_lime_plot(model, scaler, X_raw, train_df_raw, feature_names=EXPECTED_FEATURES)
+                lime_img = "/" + lime_rel
+            except Exception as e:
+                 print(f"LIME Error: {e}")
+
+            try:
+                dice_exp = generate_dice_bcf(model, X_raw, train_df_raw)
+            except Exception as e:
+                print(f"DiCE Error: {e}")
+
+            try:
+                anchor_rule = generate_anchor_rule(model, X_raw, train_df_raw.values, feature_names=EXPECTED_FEATURES)
+            except Exception as e:
+                print(f"Anchors Error: {e}")
 
         except Exception as e:
             flash("Error during prediction: " + str(e), "danger")
+            prediction = None # Prevent template from trying to render partial state
+            import traceback
+            traceback.print_exc()
             
     return render_template("self_monitor.html",
                            prediction=prediction,
                            care_plan=care_plan,
                            shap_img=shap_img,
                            lime_img=lime_img,
+                           dice_exp=dice_exp,
+                           anchor_rule=anchor_rule,
                            form_data=form_data)
 
 @app.route("/upload_pdf", methods=["POST"])
@@ -328,16 +350,9 @@ def download_sample_csv():
         return redirect(url_for("login"))
     
     # Create sample CSV
-    sample_data = {
-        'Pregnancies': [1, 0, 3],
-        'Glucose': [85, 120, 140],
-        'BloodPressure': [70, 80, 90],
-        'SkinThickness': [20, 25, 30],
-        'Insulin': [50, 100, 150],
-        'BMI': [25.5, 28.0, 32.5],
-        'DiabetesPedigreeFunction': [0.25, 0.35, 0.45],
-        'Age': [25, 35, 45]
-    }
+    # Based on new columns (21 features)
+    sample_data = {feat: [0]*3 for feat in EXPECTED_FEATURES}
+    # Customize a few for realism if needed, but 0s are fine for template structure
     sample_df = pd.DataFrame(sample_data)
     
     # Save to temp location
