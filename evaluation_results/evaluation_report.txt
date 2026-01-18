@@ -1,0 +1,42 @@
+======================================================================
+DIABETES PREDICTION MODEL - EVALUATION REPORT
+======================================================================
+
+OVERALL METRICS:
+----------------------------------------------------------------------
+Accuracy                                : 0.7527
+Precision                               : 0.7316
+Recall (Sensitivity)                    : 0.7981
+Specificity                             : 0.7072
+F1-Score                                : 0.7634
+ROC-AUC                                 : 0.8306
+Average Precision                       : 0.8041
+Matthews Correlation Coefficient        : 0.5074
+Cohen Kappa                             : 0.5053
+
+======================================================================
+DETAILED CLASSIFICATION REPORT:
+======================================================================
+              precision    recall  f1-score   support
+
+ No Diabetes       0.78      0.71      0.74      7070
+    Diabetes       0.73      0.80      0.76      7069
+
+    accuracy                           0.75     14139
+   macro avg       0.75      0.75      0.75     14139
+weighted avg       0.75      0.75      0.75     14139
+
+======================================================================
+
+METRIC INTERPRETATIONS:
+----------------------------------------------------------------------
+• Accuracy: Overall correctness of predictions
+• Precision: Of predicted diabetic cases, how many are correct
+• Recall (Sensitivity): Of actual diabetic cases, how many are detected
+• Specificity: Of actual non-diabetic cases, how many are detected
+• F1-Score: Harmonic mean of precision and recall
+• ROC-AUC: Area under ROC curve (0.5=random, 1.0=perfect)
+• Average Precision: Area under Precision-Recall curve
+• MCC: Correlation between predictions and truth (-1 to +1)
+• Cohen Kappa: Agreement adjusted for chance
+======================================================================
