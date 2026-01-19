@@ -10,7 +10,7 @@ flowchart TD
     
     D --> E[XGBoost Training<br/>200 estimators<br/>Max depth: 7]
     
-    E --> F[Model Evaluation<br/>Accuracy: 87%<br/>AUC: 0.88]
+    E --> F[Model Evaluation<br/>Accuracy: 75.27%<br/>AUC: 0.8306]
     
     F --> G[Save Model Artifacts<br/>xgb_model.pkl<br/>scaler.pkl]
     
@@ -19,3 +19,4 @@ flowchart TD
     style E fill:#ffe1e1
     style G fill:#e1ffe1
 ```
+![alt text](image-1.png)

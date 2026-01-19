@@ -24,7 +24,7 @@
 
 ### 1.2 Key Features
 
-- **High Accuracy**: Achieves 87-89% accuracy with AUC-ROC scores up to 0.92
+- **High Accuracy**: Achieves 75% accuracy with AUC-ROC score of 0.83
 - **Explainable Predictions**: Integrates SHAP, LIME, and Anchors for interpretability
 - **Clinical Decision Support**: Generates personalized care plans with actionable recommendations
 - **Production-Ready**: Full-stack Flask web application with user authentication
@@ -316,7 +316,7 @@ flowchart TD
     L --> Q[Evaluate on Test Set]
     P --> Q
     
-    Q --> R[Calculate Metrics<br/>Accuracy: 87%<br/>ROC-AUC: 0.88<br/>F1-Score: 0.87]
+    Q --> R[Calculate Metrics<br/>Accuracy: 75.27%<br/>ROC-AUC: 0.8306<br/>F1-Score: 76.34%]
     
     R --> S[Save Model Artifacts<br/>xgb_model.pkl<br/>scaler.pkl]
     
@@ -429,12 +429,12 @@ graph TB
 
 | Metric | Value | Interpretation |
 |--------|-------|----------------|
-| **Accuracy** | 87% | Correctly predicts 87 out of 100 cases |
-| **ROC-AUC** | 0.88 | Excellent discrimination ability |
-| **Precision (Diabetic)** | 0.85 | 85% of positive predictions are correct |
-| **Recall (Diabetic)** | 0.89 | Catches 89% of actual diabetic cases |
-| **F1-Score** | 0.87 | Balanced precision-recall performance |
-| **Cross-Validation AUC** | 0.87-0.89 | Consistent performance across folds |
+| **Accuracy** | 75.27% | Correctly predicts 75 out of 100 cases |
+| **ROC-AUC** | 0.8306 | Excellent discrimination ability |
+| **Precision (Diabetic)** | 73.16% | 73% of positive predictions are correct |
+| **Recall (Diabetic)** | 79.81% | Catches 80% of actual diabetic cases |
+| **F1-Score** | 76.34% | Balanced precision-recall performance |
+| **Specificity** | 70.72% | Correctly identifies 71% of non-diabetic cases |
 
 **Why These Metrics?**
 - **ROC-AUC**: Robust to class imbalance, measures discrimination across all thresholds
@@ -894,7 +894,7 @@ flowchart TB
         B1 --> B2[Feature Scaling<br/>StandardScaler]
         B2 --> B3[Hyperparameter Tuning<br/>RandomizedSearchCV<br/>10 iterations, 3-fold CV]
         B3 --> B4[Best Model Selection<br/>XGBoost with optimal params]
-        B4 --> B5[Model Evaluation<br/>Accuracy: 87%<br/>AUC: 0.88]
+        B4 --> B5[Model Evaluation<br/>Accuracy: 75.27%<br/>AUC: 0.8306]
         B5 --> B6[Save Artifacts<br/>xgb_model.pkl<br/>scaler.pkl<br/>train_sample.csv]
     end
     
@@ -1000,7 +1000,7 @@ sequenceDiagram
     XGB-->>TrainScript: Predictions & probabilities
     
     TrainScript->>TrainScript: Calculate metrics
-    Note over TrainScript: Accuracy: 87%<br/>AUC: 0.88<br/>F1: 0.87
+    Note over TrainScript: Accuracy: 75.27%<br/>AUC: 0.8306<br/>F1: 76.34%
     
     TrainScript->>Disk: Save xgb_model.pkl
     TrainScript->>Disk: Save scaler.pkl
@@ -1097,11 +1097,11 @@ Where:
 
 | Metric | Formula | GlucoVision Value | Interpretation |
 |--------|---------|-------------------|----------------|
-| **Accuracy** | (TP + TN) / Total | 87% | Overall correctness |
-| **Precision** | TP / (TP + FP) | 85% | Positive prediction reliability |
-| **Recall (Sensitivity)** | TP / (TP + FN) | 89% | Ability to catch diabetics |
-| **F1-Score** | 2 × (Precision × Recall) / (Precision + Recall) | 87% | Balance of precision & recall |
-| **Specificity** | TN / (TN + FP) | 85% | Ability to identify non-diabetics |
+| **Accuracy** | (TP + TN) / Total | 75.27% | Overall correctness |
+| **Precision** | TP / (TP + FP) | 73.16% | Positive prediction reliability |
+| **Recall (Sensitivity)** | TP / (TP + FN) | 79.81% | Ability to catch diabetics |
+| **F1-Score** | 2 × (Precision × Recall) / (Precision + Recall) | 76.34% | Balance of precision & recall |
+| **Specificity** | TN / (TN + FP) | 70.72% | Ability to identify non-diabetics |
 
 #### 8.1.3 ROC-AUC Curve
 
@@ -1111,7 +1111,7 @@ Where:
 graph LR
     A[Vary Classification Threshold<br/>0.0 → 1.0] --> B[Calculate TPR & FPR<br/>at each threshold]
     B --> C[Plot ROC Curve<br/>TPR vs FPR]
-    C --> D[Calculate Area Under Curve<br/>AUC = 0.88]
+    C --> D[Calculate Area Under Curve<br/>AUC = 0.8306]
     
     D --> E{Interpretation}
     E -->|AUC = 0.5| F[Random Classifier]
@@ -1123,13 +1123,13 @@ graph LR
     style H fill:#99ff99
 ```
 
-**GlucoVision AUC = 0.88** → Excellent discrimination ability
+**GlucoVision AUC = 0.8306** → Excellent discrimination ability
 
 ### 8.2 Model Comparison with Literature
 
 | Study | Dataset | Size | Model | Accuracy | AUC |
 |-------|---------|------|-------|----------|-----|
-| **GlucoVision (Ours)** | **BRFSS 2015** | **70,692** | **XGBoost** | **87%** | **0.88** |
+| **GlucoVision (Ours)** | **BRFSS 2015** | **70,692** | **XGBoost** | **75.27%** | **0.8306** |
 | Tigga et al. (2020) | PIMA | 768 | Random Forest | 78% | 0.82 |
 | Sisodia et al. (2018) | PIMA | 768 | Naive Bayes | 76% | - |
 | Islam et al. (2020) | PIMA | 768 | XGBoost | 82% | 0.85 |
@@ -1137,7 +1137,7 @@ graph LR
 
 **Key Advantages**:
 - ✅ **Larger Dataset**: 70k vs. typical 768 samples
-- ✅ **Better Performance**: 87% vs. 76-85%
+- ✅ **Robust Performance**: 75% accuracy with strong recall (80%) for detecting diabetic cases
 - ✅ **Explainability**: SHAP + LIME + Anchors (most studies lack XAI)
 - ✅ **Clinical Utility**: Actionable care plans (unique feature)
 - ✅ **Production Deployment**: Full web application (rare in research)
@@ -1158,12 +1158,12 @@ flowchart TD
     G --> H[Derive Metrics<br/>Precision, Recall, F1]
     
     F --> I[Calculate ROC Curve<br/>TPR vs FPR]
-    I --> J[Compute AUC Score<br/>0.88]
+    I --> J[Compute AUC Score<br/>0.8306]
     
     H --> K[Classification Report]
     J --> K
     
-    K --> L[Model Performance Summary<br/>Accuracy: 87%<br/>AUC: 0.88<br/>F1: 0.87]
+    K --> L[Model Performance Summary<br/>Accuracy: 75.27%<br/>AUC: 0.8306<br/>F1: 76.34%]
     
     L --> M{Metrics Acceptable?}
     M -->|Yes| N[Deploy Model]
@@ -1205,11 +1205,11 @@ graph TB
         A --> D1
         A --> D2
         
-        B2 --> E[Score 1: 0.87]
-        C2 --> F[Score 2: 0.89]
-        D2 --> G[Score 3: 0.88]
+        B2 --> E[Score 1: 0.81]
+        C2 --> F[Score 2: 0.84]
+        D2 --> G[Score 3: 0.83]
         
-        E --> H[Average CV Score<br/>0.88 ± 0.01]
+        E --> H[Average CV Score<br/>0.83 ± 0.02]
         F --> H
         G --> H
     end
@@ -1234,7 +1234,7 @@ This methodology document provides a comprehensive overview of the GlucoVision d
 4. **Application**: Flask web application with user authentication and batch processing
 5. **Explainability**: SHAP, LIME, and Anchors for interpretable predictions
 6. **Clinical Utility**: Personalized care plans with actionable recommendations
-7. **Performance**: 87% accuracy, 0.88 AUC-ROC, 0.87 F1-score
+7. **Performance**: 75.27% accuracy, 0.8306 AUC-ROC, 76.34% F1-score, MCC 0.5074
 8. **Workflow**: Complete pipeline from data collection to clinical deployment
 
 The system combines high predictive performance with clinical interpretability and production-ready deployment, addressing key gaps in existing diabetes prediction research.

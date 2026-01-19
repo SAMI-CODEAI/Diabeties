@@ -42,3 +42,4 @@ graph TB
     style G fill:#99ccff
     style J fill:#99ff99
 ```
+![alt text](image-2.png)

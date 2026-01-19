@@ -29,3 +29,4 @@ flowchart TD
     style L fill:#e1ffe1
     style M fill:#99ff99
 ```
+![alt text](image-6.png)

@@ -26,3 +26,4 @@ flowchart TD
     style J fill:#fff4e1
     style K fill:#e1ffe1
 ```
+![alt text](image.png)
