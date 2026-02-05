@@ -19,7 +19,7 @@
 
 ## 1. Executive Summary
 
-**GlucoVision** is an advanced diabetes risk prediction system that combines classical machine learning with state-of-the-art Explainable AI (XAI) techniques to provide clinically actionable insights. The project utilizes the **BRFSS 2015 Health Indicators dataset** (70,692 samples) with a highly tuned **XGBoost classifier** achieving **~87-89% accuracy** and **AUC-ROC scores up to 0.92** in cross-validation.
+**GlucoVision** is an advanced diabetes risk prediction system that combines classical machine learning with state-of-the-art Explainable AI (XAI) techniques to provide clinically actionable insights. The project utilizes the **BRFSS 2015 Health Indicators dataset** (70,692 samples) with a highly tuned **XGBoost classifier** achieving **75.27% accuracy** and **AUC-ROC score of 0.8306**.
 
 **Key Distinguishing Features:**
 - **Per-instance XAI explanations** (SHAP, LIME, Anchors) for clinical transparency
@@ -201,12 +201,15 @@ Training Data Sample: models/train_data_sample.csv (5000 samples for LIME/DiCE)
 ```
 
 **Performance Metrics:**
-- **ROC-AUC Score**: 0.87-0.89 (Cross-validation)
-- **Test Set AUC**: 0.88
-- **Accuracy**: ~87%
-- **Precision (Diabetic class)**: ~0.85
-- **Recall (Diabetic class)**: ~0.89
-- **F1-Score**: ~0.87
+- **ROC-AUC Score**: 0.8306
+- **Test Set AUC**: 0.8306
+- **Accuracy**: 75.27%
+- **Precision (Diabetic class)**: 73.16%
+- **Recall (Diabetic class)**: 79.81%
+- **F1-Score**: 76.34%
+- **Specificity**: 70.72%
+- **Matthews Correlation Coefficient**: 0.5074
+- **Cohen Kappa**: 0.5053
 
 **Why These Metrics?**
 - **ROC-AUC**: Robust to class imbalance, measures discrimination ability across all thresholds
@@ -237,12 +240,38 @@ Training Data Sample: models/train_data_sample.csv (5000 samples for LIME/DiCE)
 | **Alibi** | latest | Anchor Explanations | Rule-based explanations ("if-then" statements) |
 
 **Why 4 XAI Methods?**
-- **SHAP**: Global + local explanations, theoretically justified (Shapley values)
-- **LIME**: Model-agnostic, clinically interpretable linear approximations
-- **DiCE**: Actionable interventions ("change BMI from 35 to 25 to reduce risk")
-- **Anchors**: High-precision rules ("IF HighBP=1 AND Age>8 THEN Diabetic")
+Our approach integrates four distinct XAI methods to provide a comprehensive and multi-faceted understanding of the model's predictions, catering to different clinical and research needs. This ensemble approach addresses the limitations of individual XAI techniques and offers a richer, more robust interpretability framework.
 
-Each provides different insights suited for different stakeholders (researchers, clinicians, patients).
+1.  **SHAP (SHapley Additive exPlanations)**:
+    *   **Purpose**: Provides a unified, game-theoretic approach to explain individual predictions. It quantifies the contribution of each feature to the prediction by fairly distributing the "payout" (the prediction difference from the baseline) among the features.
+    *   **Why Chosen**:
+        *   **Theoretical Soundness**: Grounded in cooperative game theory (Shapley values), ensuring fairness and consistency.
+        *   **Global & Local Insights**: Can be used for both local (individual prediction) and global (overall feature importance) explanations.
+        *   **TreeExplainer Efficiency**: For tree-based models like XGBoost, SHAP's TreeExplainer is exact and computationally efficient, avoiding approximations.
+        *   **Clinical Relevance**: Helps clinicians understand *why* a specific patient received a certain risk score, identifying key contributing factors.
+
+2.  **LIME (Local Interpretable Model-agnostic Explanations)**:
+    *   **Purpose**: Explains the predictions of *any* classifier or regressor by approximating it locally with an interpretable model (e.g., linear model).
+    *   **Why Chosen**:
+        *   **Model Agnostic**: While SHAP TreeExplainer is efficient for XGBoost, LIME provides a valuable model-agnostic perspective, ensuring interpretability even if the underlying model changes.
+        *   **Local Fidelity**: Focuses on explaining a single prediction by creating a local, human-interpretable model around it. This is crucial for clinicians who need to understand specific patient cases.
+        *   **Contrastive Explanations**: Can highlight features that are *present* in the instance and contribute to the prediction, and those that are *absent* but would have changed the prediction.
+
+3.  **DiCE (Diverse Counterfactual Explanations)**:
+    *   **Purpose**: Generates "what-if" scenarios by finding the smallest changes to an instance's features that would flip its prediction (e.g., from diabetic to non-diabetic).
+    *   **Why Chosen**:
+        *   **Actionability**: Provides actionable recommendations for patients and clinicians. Instead of just "why" a prediction was made, DiCE answers "what needs to change" to achieve a desired outcome.
+        *   **Personalized Interventions**: Offers concrete, personalized suggestions (e.g., "if BMI was 25 instead of 35, your risk would decrease").
+        *   **Diversity**: Generates multiple plausible counterfactuals, giving users options for intervention.
+
+4.  **Anchors (from Alibi)**:
+    *   **Purpose**: Provides high-precision, rule-based explanations for individual predictions. An "anchor" is a set of conditions that are sufficient to "anchor" a prediction, meaning that if these conditions are met, the prediction is highly likely to remain the same, regardless of other features.
+    *   **Why Chosen**:
+        *   **High Precision**: Anchors guarantee that the explanation holds with high probability, making them reliable for critical decisions.
+        *   **Rule-Based Interpretability**: Presents explanations in an intuitive "if-then" format, which is easily understandable by non-technical users and clinicians.
+        *   **Complementary to SHAP/LIME**: While SHAP and LIME show feature contributions, Anchors identify robust conditions that drive a prediction, offering a different type of insight into model behavior.
+
+Each method provides different insights suited for different stakeholders (researchers, clinicians, patients) and collectively offers a more complete picture of model decision-making.
 
 ### 5.3 Web Application Framework
 
@@ -302,6 +331,138 @@ Each provides different insights suited for different stakeholders (researchers,
 **StandardScaler over MinMaxScaler:**
 - Better handling of outliers (BMI can be extreme)
 - Zero mean helps with SHAP value interpretation (positive = increases risk, negative = decreases risk)
+
+### 5.7 XAI Strategy: Why Multiple Explainability Techniques?
+
+#### 5.7.1 The Explainability Challenge in Medical AI
+
+**The Core Problem:**
+Machine learning models, especially ensemble methods like XGBoost, are inherently complex "black boxes." While they achieve high predictive accuracy (75.27% in our case with AUC 0.8306), clinicians and patients cannot directly understand *why* a particular prediction was made. This lack of transparency creates several critical challenges:
+
+1. **Trust Deficit**: Clinicians are reluctant to trust predictions they cannot verify
+2. **Regulatory Requirements**: Medical AI systems must provide auditable justifications
+3. **Clinical Decision-Making**: Doctors need to understand *which* risk factors are driving a patient's score
+4. **Patient Communication**: Patients have a right to understand their health predictions
+5. **Model Validation**: Researchers must verify that the model is learning medically sound relationships
+
+**Our Solution:**  
+Instead of relying on a single XAI method, we employ a **multi-method ensemble approach** that provides complementary perspectives on model behavior. Each technique addresses different aspects of the explainability challenge.
+
+#### 5.7.2 Detailed XAI Method Comparison
+
+| Aspect | SHAP | LIME | Anchors | DiCE |
+|--------|------|------|---------|------|
+| **Explanation Type** | Feature Importance (Additive) | Feature Importance (Linear Weights) | Rule-Based Conditions | Counterfactual Recommendations |
+| **Scope** | Global + Local | Local Only | Local Only | Local + Actionable |
+| **Output Format** | Numerical contribution values | Numerical coefficients | IF-THEN rules | Modified feature values |
+| **Theoretical Basis** | Game Theory (Shapley Values) | Local Linear Approximation | Beam Search for Precision | Optimization (Gradient Descent) |
+| **Model Dependency** | Model-Specific (TreeExplainer) | Model-Agnostic | Model-Agnostic | Model-Agnostic |
+| **Computation Time** | Fast (~0.2s for tree models) | Moderate (~2-5s with 5000 samples) | Slow (~10-30s with beam search) | Variable (~5-20s) |
+| **Consistency** | Deterministic (exact for trees) | Stochastic (varies with sampling) | Stochastic | Stochastic |
+| **Interpretability** | High (quantitative) | High (quantitative) | Very High (qualitative rules) | Very High (actionable) |
+| **Clinical Use Case** | "Which factors increased risk?" | "What is the local explanation?" | "What rule predicts diabetes?" | "How can I reduce my risk?" |
+
+#### 5.7.3 Why We Need ALL Four Techniques
+
+**1. SHAP - The Foundation**
+- **What It Does**: Calculates the exact marginal contribution of each feature to the prediction.
+- **Example Output**: "BMI contributes +0.12 to diabetes risk, Age contributes +0.08"
+- **Why Essential**: 
+  - Theoretically sound (Shapley values guarantee fairness)
+  - Exact calculations for tree models (not approximate)
+  - Values sum to prediction difference (verifiable mathematics)
+- **Use Case**: Model debugging, research validation, detailed clinical analysis
+- **Limitation**: Requires understanding of log-odds and additive decomposition
+
+**2. LIME - The Accessible Explanation**
+- **What It Does**: Fits a simple linear model around a specific patient's data point.
+- **Example Output**: "In this local region, each BMI unit increase adds 0.008 to diabetes probability"
+- **Why Essential**:
+  - Model-agnostic (works if we switch from XGBoost to another model)
+  - Provides intuitive linear relationships
+  - Discretizes continuous features into bins ("BMI > 30" instead of exact values)
+- **Use Case**: Patient communication, quick clinical assessment
+- **Limitation**: Only locally accurate (may not generalize beyond similar patients)
+
+**3. Anchors - The Decision Rule**
+- **What It Does**: Finds the minimum set of conditions that guarantee a prediction with high precision (>95%).
+- **Example Output**: "IF HighBP=1 AND BMI≥30 AND Age≥8 THEN Diabetic (96% precision)"
+- **Why Essential**:
+  - Human-readable rules that non-technical staff can understand
+  - High precision guarantees make them reliable for screening protocols
+  - Can be incorporated into clinical guidelines
+- **Use Case**: Triage systems, nurse training, patient education materials
+- **Limitation**: May be conservative (high precision but lower coverage)
+
+**4. DiCE - The Action Plan** *(Currently Stubbed - Planned Feature)*
+- **What It Does**: Generates alternative scenarios where the prediction would change.
+- **Example Output**: "If you reduced BMI to 28 AND started physical activity, risk would drop to 35%"
+- **Why Essential**:
+  - Provides actionable, personalized recommendations
+  - Shows multiple intervention paths (diverse counterfactuals)
+  - Empowers patients with concrete goals
+- **Use Case**: Care plan generation, lifestyle intervention design
+- **Limitation**: Requires careful constraint design (only modifiable features)
+
+#### 5.7.4 How They Complement Each Other: A Clinical Scenario
+
+**Patient Case**: John, 58 years old, BMI 36, High BP, No physical activity
+**Model Prediction**: 73% diabetes risk
+
+**Clinician's Questions** → **XAI Answers**:
+
+| Question | Method | Answer |
+|----------|--------|--------|
+| "Why is his risk so high?" | SHAP | "BMI (+0.12), Age (+0.08), HighBP (+0.05) are top contributors. PhysActivity absence adds +0.04" |
+| "Is this explanation simple enough for the patient?" | LIME | "In layman's terms: Being overweight (BMI>30) increases risk by 15%, being over 55 adds another 12%, and high blood pressure adds 8%" |
+| "Can I write a screening rule based on this?" | Anchors | "Yes: IF (BMI≥30 AND Age≥8) THEN Diabetic with 82% precision" |
+| "What should John do to reduce his risk?" | DiCE | "Reducing BMI to 28 would cut risk to 45%. Adding exercise 3x/week would further reduce to 38%" |
+
+**Result**: The clinician can:
+1. **Understand** the prediction (SHAP)
+2. **Explain** it to John in simple terms (LIME)
+3. **Apply** it to similar patients (Anchors)  
+4. **Act** on it with personalized interventions (DiCE)
+
+#### 5.7.5 Stakeholder-Specific Value
+
+**For Researchers:**
+- **SHAP**: Validate that model is learning medically sound relationships (e.g., BMI should positively correlate with diabetes)
+- **LIME**: Test model robustness across different patient subpopulations
+- **Anchors**: Extract symbolic knowledge from the black-box model
+- **DiCE**: Study feasibility and diversity of intervention scenarios
+
+**For Clinicians:**
+- **SHAP**: Understand which lab values or health indicators are most concerning
+- **LIME**: Get quick, intuitive explanations during patient consultations
+- **Anchors**: Identify high-risk patient profiles for targeted screening
+- **DiCE**: Generate personalized treatment plans with measurable goals
+
+**For Patients:**
+- **SHAP**: See exactly which of their health metrics are problematic
+- **LIME**: Understand explanations in familiar terms ("if...then" logic)
+- **Anchors**: Know clear thresholds (e.g., "BMI below 30 significantly reduces risk")
+- **DiCE**: Receive personalized, achievable lifestyle modification goals
+
+**For Regulatory Auditors:**
+- **SHAP**: Verify that predictions are mathematically consistent
+- **LIME**: Ensure model doesn't use discriminatory features inappropriately
+- **Anchors**: Review high-precision rules for bias or harmful patterns
+- **DiCE**: Assess whether recommendations are medically sound
+
+#### 5.7.6 Implementation Status in GlucoVision
+
+| Method | Status | Integration Point | Output Location |
+|--------|--------|-------------------|-----------------|
+| **SHAP** | ✅ Fully Implemented | `utils.py:generate_shap_plot()` | `static/shap_images/` |
+| **LIME** | ✅ Fully Implemented | `utils.py:generate_lime_plot()` | `static/lime_images/` |
+| **Anchors** | ✅ Fully Implemented | `utils.py:generate_anchor_rule()` | Displayed as text in results page |
+| **DiCE** | ⚠️ Stubbed Out | `utils.py:generate_dice_bcf()` | Returns empty list (planned feature) |
+
+**Why DiCE is Stubbed:**
+- Requires careful constraint design (which features are modifiable vs. immutable)
+- Counterfactual feasibility validation needed (changes must be realistic)
+- Currently focusing on explanatory XAI (SHAP, LIME, Anchors) before prescriptive XAI (DiCE)
 
 ---
 
@@ -1147,7 +1308,7 @@ Candidate 1: (BMI >= 30) AND (Age >= 8)
   Coverage: 8%
   
 Candidate 2: (BMI >= 30) AND (HighBP = 1)
-  Precision: 0.88
+  Precision: 0.78
   Coverage: 7%
   
 Candidate 3: (BMI >= 30) AND (GenHlth >= 3)
@@ -1700,17 +1861,19 @@ Fitting 3 folds for each of 10 candidates, totalling 30 fits
 
 Best params: {'n_estimators': 200, 'max_depth': 7, 'learning_rate': 0.1, 
               'gamma': 0.1, 'colsample_bytree': 0.9}
-Best AUC: 0.8834
+Best AUC: 0.8306
 
 Classification report:
               precision    recall  f1-score   support
-           0       0.88      0.86      0.87      7070
-           1       0.86      0.89      0.87      7069
-    accuracy                           0.87     14139
-   macro avg       0.87      0.87      0.87     14139
-weighted avg       0.87      0.87      0.87     14139
+           0       0.77      0.71      0.74      7070
+           1       0.73      0.80      0.76      7069
+    accuracy                           0.75     14139
+   macro avg       0.75      0.75      0.75     14139
+weighted avg       0.75      0.75      0.75     14139
 
-ROC-AUC: 0.8832
+ROC-AUC: 0.8306
+Matthews Correlation Coefficient: 0.5074
+Cohen Kappa: 0.5053
 Saved scaler and model to models
 ```
 
@@ -2086,7 +2249,7 @@ EXPLANATIONS = {
 |--------|------------------|-------------|
 | **Dataset** | PIMA (768 samples, 8 features) | BRFSS 2015 (70k samples, 21 features) |
 | **Model** | Single algorithm (RF, SVM, or LSTM) | XGBoost with RandomizedSearchCV |
-| **Accuracy** | 0.75-0.85 | 0.87-0.89 |
+| **Accuracy** | 0.75-0.85 | 75.27% |
 | **XAI** | None or global feature importance only | SHAP + LIME + Anchors (per-instance) |
 | **Deployment** | Jupyter notebook or research code | Full-stack Flask web app |
 | **User Auth** | None | SQLite + password hashing |
@@ -2210,7 +2373,7 @@ EXPLANATIONS = {
 |--------|-------------------|-------------|
 | Model | LSTM (deep learning) | XGBoost (tree-based) |
 | Data Type | Temporal EHR | Cross-sectional survey |
-| Accuracy | 0.89 | 0.87-0.89 |
+| Accuracy | 0.89 | 75.27% |
 | XAI | None (black box) | SHAP + LIME + Anchors |
 | Deployment | No | Yes |
 
