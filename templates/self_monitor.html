@@ -21,6 +21,45 @@
         <form method="post" action="{{ url_for('self_monitor') }}">
           <div class="row g-4">
 
+            <!-- Clinical Measurements -->
+            <div class="col-12">
+              <h6 class="fw-bold text-uppercase mb-3 text-danger"><i class="bi bi-person-lines-fill me-2"></i>Clinical Measurements (Optional)</h6>
+              <p class="text-muted small">Leave blank if unknown (averages will be used). Accurate values improve prediction.</p>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">Glucose (mg/dL)</label>
+              <input type="number" name="Glucose" class="form-control" placeholder="e.g. 120" value="{{ form_data.get('Glucose', '') }}">
+            </div>
+            
+            <div class="col-md-4">
+              <label class="form-label">Blood Pressure (mm Hg)</label>
+              <input type="number" name="BloodPressure" class="form-control" placeholder="e.g. 72" value="{{ form_data.get('BloodPressure', '') }}">
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">Insulin (mu U/ml)</label>
+              <input type="number" name="Insulin" class="form-control" placeholder="e.g. 80" value="{{ form_data.get('Insulin', '') }}">
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">Skin Thickness (mm)</label>
+              <input type="number" name="SkinThickness" class="form-control" placeholder="e.g. 20" value="{{ form_data.get('SkinThickness', '') }}">
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">Pregnancies</label>
+              <input type="number" name="Pregnancies" class="form-control" placeholder="e.g. 0" value="{{ form_data.get('Pregnancies', '') }}">
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">Diabetes Pedigree (Family Hist)</label>
+              <input type="number" step="0.01" name="DiabetesPedigreeFunction" class="form-control" placeholder="e.g. 0.5" value="{{ form_data.get('DiabetesPedigreeFunction', '') }}">
+              <div class="form-text">0.0 (None) - 2.5 (High Risk)</div>
+            </div>
+
+            <hr class="my-4">
+
             <!-- Demographics -->
             <div class="col-12">
               <h6 class="fw-bold text-uppercase mb-3 text-primary"><i class="bi bi-person-badge me-2"></i>Demographics

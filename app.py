@@ -42,8 +42,8 @@ app.secret_key = "change_this_randomly_for_prod"  # change for production
 
 DB_PATH = "users.db"
 MODEL_DIR = "models"
-SCALER_PATH = os.path.join(MODEL_DIR, "scaler.pkl")
-MODEL_PATH = os.path.join(MODEL_DIR, "xgb_model.pkl")
+SCALER_PATH = os.path.join(MODEL_DIR, "scaler_combined.pkl")
+MODEL_PATH = os.path.join(MODEL_DIR, "xgb_model_combined.pkl")
 TRAIN_CSV_PATH = os.path.join(MODEL_DIR, "train_data_sample.csv")
 
 # Create DB if missing
@@ -100,7 +100,7 @@ if not os.path.exists(TRAIN_CSV_PATH):
 train_df_raw = pd.read_csv(TRAIN_CSV_PATH)
 train_df_raw = train_df_raw.rename(columns=lambda c: c.strip())
 # Validate training df columns
-missing = [c for c in EXPECTED_FEATURES + ["Diabetes_binary"] if c not in train_df_raw.columns]
+missing = [c for c in EXPECTED_FEATURES if c not in train_df_raw.columns]
 if missing:
     raise ValueError(f"Training CSV missing expected columns: {missing}")
 # drop rows with NaNs in expected features for LIME creation
