@@ -4,7 +4,14 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>GlucoVision</title>
+  <meta name="description" content="GlucoVision – AI-powered diabetes risk assessment using XGBoost, SHAP, and LIME for explainable predictions.">
+  <meta name="theme-color" content="#1E3A8A">
+  <title>GlucoVision – Diabetes Risk Assessment</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -15,10 +22,11 @@
 </head>
 
 <body>
-  <!-- Navigation -->
+  <!-- Glassmorphism Navigation -->
   <nav class="navbar navbar-expand-lg">
     <div class="container">
       <a class="navbar-brand" href="{{ url_for('dashboard') if session.user_email else url_for('login') }}">
+        <span class="brand-icon"><i class="bi bi-activity"></i></span>
         GlucoVision
       </a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -62,7 +70,7 @@
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
     {% for cat,msg in messages %}
-    <div class="alert alert-{{ cat }} alert-dismissible fade show" role="alert">
+    <div class="alert alert-{{ cat }} alert-dismissible fade show fade-in-up" role="alert">
       {{ msg }}
       <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
@@ -72,6 +80,13 @@
 
     {% block body %}{% endblock %}
   </div>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="container">
+      <p class="mb-0">&copy; 2026 <a href="#">GlucoVision</a> &middot; AI-Powered Diabetes Risk Assessment</p>
+    </div>
+  </footer>
 
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
