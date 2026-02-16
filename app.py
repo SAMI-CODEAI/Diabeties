@@ -257,10 +257,86 @@ def self_monitor():
             df_valid = validate_and_prepare_df(df)
             X_raw = df_valid  # DataFrame single-row in raw units
             X_scaled = scaler.transform(X_raw.values)
-            prob = float(model.predict_proba(X_scaled)[0][1])
-            pred_label = int(model.predict(X_scaled)[0])
-            prob_pct = round(prob * 100, 2)
+            raw_prob = float(model.predict_proba(X_scaled)[0][1])
+            
+            # --- Composite Risk Scoring ---
+            # The XGBoost model outputs very polarized probabilities (near 0 or 1).
+            # We compute a clinical risk score from known diabetes risk factors
+            # and blend it with the model's output for a more informative gauge.
+            row_data = df_valid.iloc[0].to_dict()
+            
+            clinical_score = 0.0
+            # Glucose: strongest predictor
+            glucose = row_data.get('Pima_Glucose', 120)
+            if glucose >= 200: clinical_score += 25
+            elif glucose >= 160: clinical_score += 20
+            elif glucose >= 140: clinical_score += 15
+            elif glucose >= 126: clinical_score += 10
+            elif glucose >= 100: clinical_score += 5
+            
+            # BMI
+            bmi = row_data.get('BMI', 25)
+            if bmi >= 40: clinical_score += 15
+            elif bmi >= 35: clinical_score += 12
+            elif bmi >= 30: clinical_score += 8
+            elif bmi >= 27: clinical_score += 4
+            elif bmi >= 25: clinical_score += 2
+            
+            # Age
+            age = row_data.get('Age', 30)
+            if age >= 65: clinical_score += 12
+            elif age >= 55: clinical_score += 9
+            elif age >= 45: clinical_score += 6
+            elif age >= 35: clinical_score += 3
+            
+            # Blood pressure
+            if row_data.get('CDC_HighBP', 0) == 1: clinical_score += 8
+            bp = row_data.get('Pima_BloodPressure', 70)
+            if bp >= 90: clinical_score += 4
+            elif bp >= 80: clinical_score += 2
+            
+            # Cholesterol
+            if row_data.get('CDC_HighChol', 0) == 1: clinical_score += 6
+            
+            # Family history (Diabetes Pedigree)
+            pedigree = row_data.get('Pima_DiabetesPedigreeFunction', 0.3)
+            if pedigree >= 1.0: clinical_score += 10
+            elif pedigree >= 0.5: clinical_score += 5
+            elif pedigree >= 0.3: clinical_score += 2
+            
+            # Lifestyle factors
+            if row_data.get('CDC_PhysActivity', 1) == 0: clinical_score += 4
+            if row_data.get('CDC_Smoker', 0) == 1: clinical_score += 3
+            if row_data.get('CDC_HeartDiseaseorAttack', 0) == 1: clinical_score += 5
+            if row_data.get('CDC_Stroke', 0) == 1: clinical_score += 4
+            if row_data.get('CDC_DiffWalk', 0) == 1: clinical_score += 3
+            
+            # General health self-report
+            gen_hlth = row_data.get('CDC_GenHlth', 2)
+            if gen_hlth >= 4: clinical_score += 6
+            elif gen_hlth >= 3: clinical_score += 3
+            
+            # Diet
+            if row_data.get('CDC_Fruits', 1) == 0: clinical_score += 2
+            if row_data.get('CDC_Veggies', 1) == 0: clinical_score += 2
+            if row_data.get('CDC_HvyAlcoholConsump', 0) == 1: clinical_score += 3
+            
+            # Cap clinical score at 100
+            clinical_pct = min(clinical_score, 100)
+            
+            # Blend: 40% model + 60% clinical scoring
+            blended_prob = (raw_prob * 0.4) + (clinical_pct / 100.0 * 0.6)
+            prob_pct = round(blended_prob * 100, 1)
+            prob_pct = max(0, min(100, prob_pct))  # Clamp 0-100
+            
+            # Classification based on blended probability
+            RISK_THRESHOLD = 35  # percent
+            pred_label = 1 if prob_pct >= RISK_THRESHOLD else 0
             prediction = {"probability": prob_pct, "label": "Diabetic" if pred_label == 1 else "Not Diabetic"}
+            
+            # Debug logging
+            print(f"[PREDICTION] Raw model: {round(raw_prob*100,2)}% | Clinical: {clinical_pct}% | Blended: {prob_pct}% | Label: {prediction['label']}")
+            print(f"[FEATURES] Glucose={glucose}, BMI={bmi}, Age={age}, BP={bp}, GenHlth={gen_hlth}")
             
             # Care Plan (Critical)
             try:

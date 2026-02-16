@@ -298,12 +298,11 @@
         </div>
 
         <div class="row align-items-center mb-5">
-          <!-- RISK DIAL (Gauge Chart) -->
           <div class="col-md-4 text-center border-end">
             <h5 class="text-muted mb-3">Estimated Risk Probability</h5>
 
             <!-- CSS Gauge implementation -->
-            <div class="position-relative mx-auto" style="width: 220px; height: 130px;">
+            <div class="position-relative mx-auto" style="width: 220px; height: 140px;">
               <div class="gauge-wrapper mx-auto"
                 style="position: relative; width: 220px; height: 110px; overflow: hidden;">
 
@@ -327,7 +326,7 @@
                         bottom: 0; 
                         left: 108px;
                         width: 4px; 
-                        height: 105px; 
+                        height: 100px; 
                         background: var(--text-primary); 
                         border-radius: 4px 4px 0 0;
                         transform-origin: bottom center; 
@@ -347,17 +346,18 @@
               </div>
 
               <!-- Value Display -->
-              <div class="text-center mt-2" style="position: relative; z-index: 4; top: -25px;">
-                <h2 class="mb-0 fw-bold" style="font-size: 2.2rem; color: var(--text-primary);">
+              <div class="text-center" style="position: relative; z-index: 4; margin-top: -20px;">
+                <h2 class="mb-0 fw-bold"
+                  style="font-size: 2.2rem; color: {% if prediction.probability >= 70 %}var(--danger){% elif prediction.probability >= 40 %}var(--warning){% else %}var(--success){% endif %};">
                   {{ prediction.probability }}<span style="font-size: 1rem;">%</span>
                 </h2>
               </div>
 
               <!-- Labels -->
               <span
-                style="position: absolute; bottom: 25px; left: 0; font-size: 0.85rem; font-weight: bold; color: var(--text-muted);">0%</span>
+                style="position: absolute; bottom: 30px; left: 0; font-size: 0.85rem; font-weight: bold; color: var(--text-muted);">0%</span>
               <span
-                style="position: absolute; bottom: 25px; right: 0; font-size: 0.85rem; font-weight: bold; color: var(--text-muted);">100%</span>
+                style="position: absolute; bottom: 30px; right: 0; font-size: 0.85rem; font-weight: bold; color: var(--text-muted);">100%</span>
             </div>
             <p class="mt-2 fw-bold"
               style="color: {{ 'var(--danger)' if prediction.label == 'Diabetic' else 'var(--success)' }}">

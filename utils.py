@@ -75,16 +75,28 @@ def single_input_to_df(form_dict):
             return default
 
     # 1. Map Clinical Features (Pima)
-    row["Pima_Pregnancies"] = get_val("Pregnancies", 0)
-    row["Pima_Glucose"] = get_val("Glucose", 120)       # Default healthy-ish if missing
-    row["Pima_BloodPressure"] = get_val("BloodPressure", 70) # Default healthy
-    row["Pima_SkinThickness"] = get_val("SkinThickness", 20) # Median
-    row["Pima_Insulin"] = get_val("Insulin", 80)        # Median
-    row["Pima_DiabetesPedigreeFunction"] = get_val("DiabetesPedigreeFunction", 0.3)
+    # Defaults are TRAINING DATA MEDIANS for accurate "average patient" predictions
+    row["Pima_Pregnancies"] = get_val("Pregnancies", 5)
+    row["Pima_Glucose"] = get_val("Glucose", 132)        # Training median=132
+    row["Pima_BloodPressure"] = get_val("BloodPressure", 74) # Training median=74
+    row["Pima_SkinThickness"] = get_val("SkinThickness", 12) # Training median=12
+    row["Pima_Insulin"] = get_val("Insulin", 0)           # Training median=0 (many zeros in Pima data)
+    row["Pima_DiabetesPedigreeFunction"] = get_val("DiabetesPedigreeFunction", 0.452) # Training median
 
     # 2. Map Common Features (Age/BMI)
-    age_raw = get_val("Age", 30) # Default 30 years
+    # NOTE: The form sends Age as a BRFSS category (1-13), NOT raw age in years.
+    # 1=18-24, 2=25-29, 3=30-34, 4=35-39, 5=40-44, 6=45-49, 7=50-54,
+    # 8=55-59, 9=60-64, 10=65-69, 11=70-74, 12=75-79, 13=80+
+    age_category = int(get_val("Age", 3))  # Default category 3 (30-34)
     bmi_raw = get_val("BMI", 25.0)
+
+    # Reverse-map category to approximate midpoint age for the raw "Age" feature
+    # These match the combine_datasets.py mapping used during training
+    AGE_CATEGORY_TO_MIDPOINT = {
+        1: 21.5, 2: 27.0, 3: 32.0, 4: 37.0, 5: 42.0, 6: 47.0, 7: 52.0,
+        8: 57.0, 9: 62.0, 10: 67.0, 11: 72.0, 12: 77.0, 13: 82.0
+    }
+    age_raw = AGE_CATEGORY_TO_MIDPOINT.get(age_category, 47.0)  # Default to median age category
 
     row["BMI"] = bmi_raw
     row["Age"] = age_raw
@@ -92,23 +104,8 @@ def single_input_to_df(form_dict):
     # CDC Duplicates
     row["CDC_BMI"] = bmi_raw
     
-    # CDC Age Category Calculation (Approximate inverse of mapping)
-    # 18-24=1, 25-29=2, 30-34=3, 35-39=4, 40-44=5, 45-49=6, 50-54=7, 
-    # 55-59=8, 60-64=9, 65-69=10, 70-74=11, 75-79=12, 80+=13
-    if age_raw < 25: cat = 1
-    elif age_raw < 30: cat = 2
-    elif age_raw < 35: cat = 3
-    elif age_raw < 40: cat = 4
-    elif age_raw < 45: cat = 5
-    elif age_raw < 50: cat = 6
-    elif age_raw < 55: cat = 7
-    elif age_raw < 60: cat = 8
-    elif age_raw < 65: cat = 9
-    elif age_raw < 70: cat = 10
-    elif age_raw < 75: cat = 11
-    elif age_raw < 80: cat = 12
-    else: cat = 13
-    row["CDC_Age_Category"] = cat
+    # Use the category directly from the form (already 1-13)
+    row["CDC_Age_Category"] = age_category
 
     # 3. Map CDC Lifestyle Features
     # Note: Form inputs match CDC suffixes usually e.g. "HighBP"
@@ -124,13 +121,13 @@ def single_input_to_df(form_dict):
     row["CDC_HvyAlcoholConsump"] = get_val("HvyAlcoholConsump", 0)
     row["CDC_AnyHealthcare"] = get_val("AnyHealthcare", 1)
     row["CDC_NoDocbcCost"] = get_val("NoDocbcCost", 0)
-    row["CDC_GenHlth"] = get_val("GenHlth", 2) # Very Good default
+    row["CDC_GenHlth"] = get_val("GenHlth", 2)  # Training median=2 (Very Good)
     row["CDC_MentHlth"] = get_val("MentHlth", 0)
     row["CDC_PhysHlth"] = get_val("PhysHlth", 0)
     row["CDC_DiffWalk"] = get_val("DiffWalk", 0)
     row["CDC_Sex"] = get_val("Sex", 0)
-    row["CDC_Education"] = get_val("Education", 5) # Some college
-    row["CDC_Income"] = get_val("Income", 6) # Middle income default
+    row["CDC_Education"] = get_val("Education", 5)  # Training median=5
+    row["CDC_Income"] = get_val("Income", 7)  # Training median=7
     
     return pd.DataFrame([row])
 
