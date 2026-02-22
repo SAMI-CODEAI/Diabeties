@@ -4,8 +4,8 @@
 <!-- Page Header -->
 <div class="row mb-4 fade-in-up">
   <div class="col">
-    <h1 class="display-5 fw-bold"><i class="bi bi-activity me-3" style="color: var(--accent-teal);"></i>Personal Risk
-      Assessment</h1>
+    <h1 class="fw-bold" style="font-size: 2rem;">Personal Risk Assessment</h1>
+    <p class="lead">Complete the health survey below for a comprehensive risk analysis</p>
   </div>
 </div>
 
@@ -14,7 +14,7 @@
   <div class="col-lg-10 mx-auto">
     <div class="card fade-in-up">
       <div class="card-header">
-        <h5 class="mb-0"><i class="bi bi-clipboard2-pulse me-2"></i>Health Survey</h5>
+        <h5 class="mb-0">Health Survey</h5>
       </div>
       <div class="card-body p-4">
 
@@ -23,38 +23,46 @@
 
             <!-- Clinical Measurements -->
             <div class="col-12">
-              <h6 class="fw-bold text-uppercase mb-3 text-danger"><i class="bi bi-person-lines-fill me-2"></i>Clinical Measurements (Optional)</h6>
-              <p class="text-muted small">Leave blank if unknown (averages will be used). Accurate values improve prediction.</p>
+              <h6 class="section-heading section-clinical"><i class="bi bi-heart-pulse me-2"></i>Clinical Measurements
+                (Optional)</h6>
+              <p class="text-muted small">Leave blank if unknown (averages will be used). Accurate values improve
+                prediction.</p>
             </div>
 
             <div class="col-md-4">
               <label class="form-label">Glucose (mg/dL)</label>
-              <input type="number" name="Glucose" class="form-control" placeholder="e.g. 120" value="{{ form_data.get('Glucose', '') }}">
+              <input type="number" name="Glucose" class="form-control" placeholder="e.g. 120"
+                value="{{ form_data.get('Glucose', '') }}">
             </div>
-            
+
             <div class="col-md-4">
               <label class="form-label">Blood Pressure (mm Hg)</label>
-              <input type="number" name="BloodPressure" class="form-control" placeholder="e.g. 72" value="{{ form_data.get('BloodPressure', '') }}">
+              <input type="number" name="BloodPressure" class="form-control" placeholder="e.g. 72"
+                value="{{ form_data.get('BloodPressure', '') }}">
             </div>
 
             <div class="col-md-4">
               <label class="form-label">Insulin (mu U/ml)</label>
-              <input type="number" name="Insulin" class="form-control" placeholder="e.g. 80" value="{{ form_data.get('Insulin', '') }}">
+              <input type="number" name="Insulin" class="form-control" placeholder="e.g. 80"
+                value="{{ form_data.get('Insulin', '') }}">
             </div>
 
             <div class="col-md-4">
               <label class="form-label">Skin Thickness (mm)</label>
-              <input type="number" name="SkinThickness" class="form-control" placeholder="e.g. 20" value="{{ form_data.get('SkinThickness', '') }}">
+              <input type="number" name="SkinThickness" class="form-control" placeholder="e.g. 20"
+                value="{{ form_data.get('SkinThickness', '') }}">
             </div>
 
             <div class="col-md-4">
               <label class="form-label">Pregnancies</label>
-              <input type="number" name="Pregnancies" class="form-control" placeholder="e.g. 0" value="{{ form_data.get('Pregnancies', '') }}">
+              <input type="number" name="Pregnancies" class="form-control" placeholder="e.g. 0"
+                value="{{ form_data.get('Pregnancies', '') }}">
             </div>
 
             <div class="col-md-4">
               <label class="form-label">Diabetes Pedigree (Family Hist)</label>
-              <input type="number" step="0.01" name="DiabetesPedigreeFunction" class="form-control" placeholder="e.g. 0.5" value="{{ form_data.get('DiabetesPedigreeFunction', '') }}">
+              <input type="number" step="0.01" name="DiabetesPedigreeFunction" class="form-control"
+                placeholder="e.g. 0.5" value="{{ form_data.get('DiabetesPedigreeFunction', '') }}">
               <div class="form-text">0.0 (None) - 2.5 (High Risk)</div>
             </div>
 
@@ -62,8 +70,7 @@
 
             <!-- Demographics -->
             <div class="col-12">
-              <h6 class="fw-bold text-uppercase mb-3 text-primary"><i class="bi bi-person-badge me-2"></i>Demographics
-              </h6>
+              <h6 class="section-heading section-demographics"><i class="bi bi-person-badge me-2"></i>Demographics</h6>
             </div>
 
             <div class="col-md-6">
@@ -108,12 +115,9 @@
               </select>
             </div>
 
-
-
             <!-- Health Indicators -->
             <div class="col-12 mt-4">
-              <h6 class="fw-bold text-uppercase mb-3 text-primary"><i class="bi bi-heart-pulse me-2"></i>Health
-                Indicators</h6>
+              <h6 class="section-heading section-health"><i class="bi bi-heart-pulse me-2"></i>Health Indicators</h6>
             </div>
 
             <div class="col-md-4">
@@ -181,8 +185,8 @@
 
             <!-- Lifestyle -->
             <div class="col-12 mt-4">
-              <h6 class="fw-bold text-uppercase mb-3 text-primary"><i class="bi bi-bicycle me-2"></i>Lifestyle & General
-                Health</h6>
+              <h6 class="section-heading section-lifestyle"><i class="bi bi-bicycle me-2"></i>Lifestyle & General Health
+              </h6>
             </div>
 
             <div class="col-md-4">
@@ -245,8 +249,7 @@
 
             <!-- Healthcare Access -->
             <div class="col-12 mt-4">
-              <h6 class="fw-bold text-uppercase mb-3 text-primary"><i class="bi bi-hospital me-2"></i>Healthcare Access
-              </h6>
+              <h6 class="section-heading section-healthcare"><i class="bi bi-hospital me-2"></i>Healthcare Access</h6>
             </div>
 
             <div class="col-md-6">
@@ -269,7 +272,7 @@
             <!-- Submit Button -->
             <div class="col-12 mt-5">
               <button type="submit" class="btn btn-success btn-lg w-100">
-                <i class="bi bi-graph-up-arrow me-2"></i>Analyze Risk Profile
+                Analyze Risk Profile
               </button>
             </div>
 
@@ -282,13 +285,11 @@
 </div>
 
 <!-- Results Section -->
-<!-- Results Section -->
 {% if prediction %}
 <div class="row fade-in-up">
   <div class="col-lg-12 mx-auto">
     <!-- Main Result Card -->
-    <div class="card mb-4"
-      style="border-top: 5px solid {{ 'var(--medical-red)' if prediction.label == 'Diabetic' else 'var(--accent-green)' }};">
+    <div class="card mb-4 {{ 'result-border-danger' if prediction.label == 'Diabetic' else 'result-border-success' }}">
       <div class="card-body p-5">
 
         <!-- Header -->
@@ -297,24 +298,22 @@
         </div>
 
         <div class="row align-items-center mb-5">
-          <!-- RISK DIAL (Gauge Chart) -->
           <div class="col-md-4 text-center border-end">
             <h5 class="text-muted mb-3">Estimated Risk Probability</h5>
 
             <!-- CSS Gauge implementation -->
-            <div class="position-relative mx-auto" style="width: 220px; height: 130px;">
+            <div class="position-relative mx-auto" style="width: 220px; height: 140px;">
               <div class="gauge-wrapper mx-auto"
                 style="position: relative; width: 220px; height: 110px; overflow: hidden;">
 
-                <!-- Gradient Background (Green -> Yellow -> Red) -->
-                <div class="gauge-bg" style="
+                <!-- Gradient Background (Green -> Yellow -> Red) using palette -->
+                <div class="gauge-bg gauge-gradient" style="
                         width: 220px; height: 110px; 
-                        background: linear-gradient(90deg, #2ecc71 0%, #f1c40f 50%, #e74c3c 100%); 
                         border-radius: 110px 110px 0 0;
                         opacity: 0.9;
                    "></div>
 
-                <!-- White Overlay for Arc Effect (Optional for arc thickness) -->
+                <!-- White Overlay for Arc Effect -->
                 <div class="gauge-overlay" style="
                         position: absolute; bottom: 0; left: 30px; width: 160px; height: 80px; 
                         background: white; border-radius: 80px 80px 0 0;
@@ -325,10 +324,10 @@
                 <div class="gauge-needle" style="
                         position: absolute; 
                         bottom: 0; 
-                        left: 108px; /* Center (110) - half width (2) = 108 */
+                        left: 108px;
                         width: 4px; 
-                        height: 105px; 
-                        background: #333; 
+                        height: 100px; 
+                        background: var(--text-primary); 
                         border-radius: 4px 4px 0 0;
                         transform-origin: bottom center; 
                         transform: rotate({{ (prediction.probability / 100 * 180) - 90 }}deg);
@@ -340,50 +339,51 @@
                 <div style="
                         position: absolute; bottom: -8px; left: 102px; 
                         width: 16px; height: 16px; 
-                        background: #333; border-radius: 50%; 
+                        background: var(--text-primary); border-radius: 50%; 
                         z-index: 3;
                    "></div>
 
               </div>
 
               <!-- Value Display -->
-              <div class="text-center mt-2" style="position: relative; z-index: 4; top: -25px;">
-                <h2 class="mb-0 fw-bold" style="font-size: 2.2rem; color: #333;">
+              <div class="text-center" style="position: relative; z-index: 4; margin-top: -20px;">
+                <h2 class="mb-0 fw-bold"
+                  style="font-size: 2.2rem; color: {% if prediction.probability >= 70 %}var(--danger){% elif prediction.probability >= 40 %}var(--warning){% else %}var(--success){% endif %};">
                   {{ prediction.probability }}<span style="font-size: 1rem;">%</span>
                 </h2>
               </div>
 
               <!-- Labels -->
               <span
-                style="position: absolute; bottom: 25px; left: 0; font-size: 0.85rem; font-weight: bold; color: #666;">0%</span>
+                style="position: absolute; bottom: 30px; left: 0; font-size: 0.85rem; font-weight: bold; color: var(--text-muted);">0%</span>
               <span
-                style="position: absolute; bottom: 25px; right: 0; font-size: 0.85rem; font-weight: bold; color: #666;">100%</span>
+                style="position: absolute; bottom: 30px; right: 0; font-size: 0.85rem; font-weight: bold; color: var(--text-muted);">100%</span>
             </div>
             <p class="mt-2 fw-bold"
-              style="color: {{ 'var(--medical-red)' if prediction.label == 'Diabetic' else 'var(--accent-green)' }}">
+              style="color: {{ 'var(--danger)' if prediction.label == 'Diabetic' else 'var(--success)' }}">
               {{ prediction.label }}
             </p>
           </div>
 
           <!-- SHAP (The 'Why') -->
           <div class="col-md-8 ps-md-5">
-            <h5 class="fw-bold mb-3 text-primary"><i class="bi bi-graph-up-arrow me-2"></i>Analysis: Key Drivers</h5>
+            <h5 class="fw-bold mb-3" style="color: var(--primary);">Analysis: Key Drivers</h5>
             <p class="text-muted mb-4 small">These factors contributed most significantly to the calculated risk score.
             </p>
 
             <div class="row g-3">
               {% for item in care_plan.key_factors %}
               <div class="col-12">
-                <div class="card border-0 bg-light shadow-sm">
+                <div class="card border-0 shadow-sm" style="background: var(--background);">
                   <div class="card-body p-3">
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                      <h6 class="fw-bold mb-0 text-dark">{{ item.factor }} <span
-                          class="text-muted fw-normal ms-2">(Value: {{ item.value }})</span></h6>
+                      <h6 class="fw-bold mb-0" style="color: var(--text-primary);">{{ item.factor }} <span
+                          class="fw-normal ms-2" style="color: var(--text-muted);">(Value: {{ item.value }})</span></h6>
                       <span class="badge {{ 'bg-success' if item.label == 'Modifiable' else 'bg-secondary' }}">{{
                         item.label }}</span>
                     </div>
-                    <p class="mb-1 small text-dark"><strong>Why:</strong> {{ item.why }}</p>
-                    <p class="mb-0 small text-muted"><strong>How:</strong> {{ item.how }}</p>
+                    <p class="mb-1 small" style="color: var(--text-primary);"><strong>Why:</strong> {{ item.why }}</p>
+                    <p class="mb-0 small" style="color: var(--text-secondary);"><strong>How:</strong> {{ item.how }}</p>
                   </div>
                 </div>
               </div>
@@ -397,10 +397,10 @@
         <div class="row">
           <!-- ACTION PLAN (DiCE) -->
           <div class="col-md-7">
-            <h4 class="fw-bold mb-4 text-success"><i class="bi bi-check2-circle me-2"></i>Recommended Action Plan</h4>
+            <h4 class="fw-bold mb-4" style="color: var(--success);">Recommended Action Plan</h4>
 
-            <div class="alert alert-light border-start border-success border-4 shadow-sm">
-              <h6 class="fw-bold text-success mb-2">Primary Lifestyle Modifications</h6>
+            <div class="alert alert-success">
+              <h6 class="fw-bold mb-2" style="color: var(--success);">Primary Lifestyle Modifications</h6>
               {% if care_plan.actions %}
               <ul class="mb-0 list-unstyled">
                 {% for action in care_plan.actions %}
@@ -416,9 +416,9 @@
 
           <!-- STATIC FACTORS -->
           <div class="col-md-5">
-            <div class="bg-light p-4 rounded h-100">
-              <h6 class="fw-bold text-muted mb-3"><i class="bi bi-info-circle me-2"></i>Non-Modifiable Factors</h6>
-              <p class="small text-muted mb-0">
+            <div class="p-4 rounded h-100" style="background: var(--background);">
+              <h6 class="fw-bold mb-3" style="color: var(--text-muted);">Non-Modifiable Factors</h6>
+              <p class="small mb-0" style="color: var(--text-muted);">
                 Note: Certain baseline factors like Age, Genetics, and History contribute to your risk score but cannot
                 be changed.
                 Your personalized plan focuses only on <strong>modifiable lifestyle levers</strong> (Diet, Exercise,
@@ -426,7 +426,7 @@
               </p>
 
               <div class="mt-4">
-                <h6 class="fw-bold text-dark mb-2">Visual Explanations</h6>
+                <h6 class="fw-bold mb-2" style="color: var(--text-primary);">Visual Explanations</h6>
                 <!-- Technical Analysis (Accordion) -->
                 <div class="accordion" id="xaiAccordion">
                   <div class="accordion-item">

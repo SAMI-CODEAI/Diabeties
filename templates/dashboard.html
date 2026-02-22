@@ -5,8 +5,8 @@
   <div class="col-lg-10 mx-auto">
 
     <!-- Welcome Header -->
-    <div class="text-center mb-5 pt-4">
-      <h1 class="fw-bold mb-3">GlucoVision</h1>
+    <div class="text-center mb-5 pt-4 fade-in-up">
+      <h1 class="fw-bold mb-2" style="font-size: 2.5rem;">Gluco<span style="color: var(--secondary);">Vision</span></h1>
       <p class="lead">AI-Powered Diabetes Risk Assessment</p>
     </div>
 
@@ -14,11 +14,14 @@
     <div class="row g-4">
 
       <!-- Personal Assessment -->
-      <div class="col-md-4">
+      <div class="col-md-4 fade-in-up">
         <a href="{{ url_for('self_monitor') }}" class="text-decoration-none">
-          <div class="card h-100 text-center">
+          <div class="card action-card h-100 text-center">
             <div class="card-body p-4">
-              <h4 class="fw-bold mb-3 mt-2">Personal Assessment</h4>
+              <div class="card-icon icon-primary mx-auto">
+                <i class="bi bi-activity"></i>
+              </div>
+              <h4 class="fw-bold mb-3">Personal Assessment</h4>
               <p class="text-muted mb-4">Analyze your individual diabetes risk using lab values or PDF reports</p>
               <span class="btn btn-primary">Start Assessment</span>
             </div>
@@ -27,11 +30,14 @@
       </div>
 
       <!-- Batch Analysis -->
-      <div class="col-md-4">
+      <div class="col-md-4 fade-in-up">
         <a href="{{ url_for('upload') }}" class="text-decoration-none">
-          <div class="card h-100 text-center">
+          <div class="card action-card h-100 text-center">
             <div class="card-body p-4">
-              <h4 class="fw-bold mb-3 mt-2">Batch Analysis</h4>
+              <div class="card-icon icon-secondary mx-auto">
+                <i class="bi bi-clipboard-data"></i>
+              </div>
+              <h4 class="fw-bold mb-3">Batch Analysis</h4>
               <p class="text-muted mb-4">Upload patient datasets for comprehensive group risk analysis</p>
               <span class="btn btn-primary">Upload Dataset</span>
             </div>
@@ -40,11 +46,14 @@
       </div>
 
       <!-- Research -->
-      <div class="col-md-4">
+      <div class="col-md-4 fade-in-up">
         <a href="{{ url_for('comparisons') }}" class="text-decoration-none">
-          <div class="card h-100 text-center">
+          <div class="card action-card h-100 text-center">
             <div class="card-body p-4">
-              <h4 class="fw-bold mb-3 mt-2">Research Data</h4>
+              <div class="card-icon icon-accent mx-auto">
+                <i class="bi bi-bar-chart-line"></i>
+              </div>
+              <h4 class="fw-bold mb-3">Research Data</h4>
               <p class="text-muted mb-4">Compare GlucoVision with state-of-the-art models</p>
               <span class="btn btn-primary">View Research</span>
             </div>
@@ -56,19 +65,19 @@
 
     <!-- Info Cards -->
     <div class="row g-4 mt-4">
-      <div class="col-md-6">
+      <div class="col-md-6 fade-in-up">
         <div class="card">
           <div class="card-body p-4">
-            <h5 class="fw-bold mb-3">About GlucoVision</h5>
+            <h5 class="fw-bold mb-3" style="color: var(--primary);">About GlucoVision</h5>
             <p class="mb-0">Advanced machine learning with XGBoost and explainable AI (SHAP & LIME) to provide accurate
               diabetes risk predictions with clear, actionable insights.</p>
           </div>
         </div>
       </div>
-      <div class="col-md-6">
+      <div class="col-md-6 fade-in-up">
         <div class="card">
           <div class="card-body p-4">
-            <h5 class="fw-bold mb-3">Clinical Disclaimer</h5>
+            <h5 class="fw-bold mb-3" style="color: var(--secondary);">Clinical Disclaimer</h5>
             <p class="mb-0">This tool is for screening purposes only and should not replace professional medical advice.
               Always consult healthcare providers for diagnosis and treatment.</p>
           </div>
