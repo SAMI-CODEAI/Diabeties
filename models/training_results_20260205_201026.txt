@@ -1,0 +1,47 @@
+================================================================================
+DIABETES PREDICTION MODEL TRAINING RESULTS
+Timestamp: 2026-02-05 20:10:26
+================================================================================
+
+DATASET INFORMATION
+--------------------------------------------------------------------------------
+Total samples: 150,000
+Features: 29
+Training samples: 90,000
+Validation samples: 30,000
+Test samples: 30,000
+
+ALL MODELS VALIDATION PERFORMANCE
+--------------------------------------------------------------------------------
+Model                Accuracy   Precision  Recall     F1         AUC-ROC   
+--------------------------------------------------------------------------------
+Logistic Regression  0.8280     0.7706     0.6160     0.6847     0.8761    
+Random Forest        1.0000     0.9999     1.0000     0.9999     1.0000    
+Gradient Boosting    1.0000     1.0000     1.0000     1.0000     1.0000    
+XGBoost              1.0000     1.0000     1.0000     1.0000     1.0000    
+
+================================================================================
+BEST MODEL: Gradient Boosting
+================================================================================
+
+TEST SET PERFORMANCE
+--------------------------------------------------------------------------------
+Accuracy:  1.0000
+Precision: 1.0000
+Recall:    1.0000
+F1 Score:  1.0000
+AUC-ROC:   1.0000
+
+Confusion Matrix:
+TN: 20,906  FP: 0
+FN: 0  TP: 9,094
+
+Classification Report:
+              precision    recall  f1-score   support
+
+ No Diabetes       1.00      1.00      1.00     20906
+    Diabetes       1.00      1.00      1.00      9094
+
+    accuracy                           1.00     30000
+   macro avg       1.00      1.00      1.00     30000
+weighted avg       1.00      1.00      1.00     30000

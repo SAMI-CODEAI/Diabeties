@@ -3,39 +3,79 @@ email:  samiksha@gmail.com
 password: 123  
 
 
-======================================================================
-DIABETES PREDICTION MODEL EVALUATION
-======================================================================
+================================================================================
+MODEL EVALUATION
+================================================================================
+Accuracy: 0.6754
+ROC-AUC:  0.7870
+F1 Score: 0.6707
 
-Loading data and model...  
-Generating predictions...
-
-Calculating metrics...
-
-======================================================================
-EVALUATION METRICS:
-======================================================================
-Accuracy                                : 0.7527  
-Precision                               : 0.7316  
-Recall (Sensitivity)                    : 0.7981  
-Specificity                             : 0.7072  
-F1-Score                                : 0.7634  
-ROC-AUC                                 : 0.8306  
-Average Precision                       : 0.8041  
-Matthews Correlation Coefficient        : 0.5074  
-Cohen Kappa                             : 0.5053  
-======================================================================
-
-Detailed Classification Report:
+Classification Report:
               precision    recall  f1-score   support
 
- No Diabetes       0.78      0.71      0.74      7070  
-    Diabetes       0.73      0.80      0.76      7069  
+ROC-AUC:  0.7870
+F1 Score: 0.6707
 
-    accuracy                           0.75     14139  
-   macro avg       0.75      0.75      0.75     14139  
-weighted avg       0.75      0.75      0.75     14139
+Classification Report:
+              precision    recall  f1-score   support
 
+           0       0.79      0.60      0.68     14995
+           1       0.59      0.78      0.67     11012
+F1 Score: 0.6707
+
+Classification Report:
+              precision    recall  f1-score   support
+
+           0       0.79      0.60      0.68     14995
+           1       0.59      0.78      0.67     11012
+
+Classification Report:
+              precision    recall  f1-score   support
+
+           0       0.79      0.60      0.68     14995
+           1       0.59      0.78      0.67     11012
+Classification Report:
+              precision    recall  f1-score   support
+
+           0       0.79      0.60      0.68     14995
+           1       0.59      0.78      0.67     11012
+              precision    recall  f1-score   support
+
+           0       0.79      0.60      0.68     14995
+           1       0.59      0.78      0.67     11012
+           0       0.79      0.60      0.68     14995
+           1       0.59      0.78      0.67     11012
+
+    accuracy                           0.68     26007
+
+    accuracy                           0.68     26007
+    accuracy                           0.68     26007
+   macro avg       0.69      0.69      0.68     26007
+weighted avg       0.70      0.68      0.68     26007
+   macro avg       0.69      0.69      0.68     26007
+weighted avg       0.70      0.68      0.68     26007
+
+weighted avg       0.70      0.68      0.68     26007
+
+
+Sensitivity (Recall): 0.7807
+Sensitivity (Recall): 0.7807
+Specificity: 0.5980
+
+Feature Importance (Gain):
+                         feature  importance
+6                            BMI    0.529729
+5  Pima_DiabetesPedigreeFunction    0.181240
+1                   Pima_Glucose    0.104375
+7                            Age    0.085097
+0               Pima_Pregnancies    0.031841
+3             Pima_SkinThickness    0.021743
+9               CDC_Age_Category    0.020689
+4                   Pima_Insulin    0.017201
+2             Pima_BloodPressure    0.007100
+8                        CDC_BMI    0.000896
+
+Training workflow completed successfully!
 
 
 

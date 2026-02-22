@@ -5,17 +5,35 @@ import os, time
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-import dice_ml
-from alibi.explainers import AnchorTabular
-from lime.lime_tabular import LimeTabularExplainer
 import shap
 
+# Optional XAI libraries
+try:
+    import dice_ml
+except ImportError:
+    dice_ml = None
+
+try:
+    from alibi.explainers import AnchorTabular
+except ImportError:
+    AnchorTabular = None
+
+try:
+    from lime.lime_tabular import LimeTabularExplainer
+except ImportError:
+    LimeTabularExplainer = None
+
 EXPECTED_FEATURES = [
-    "HighBP", "HighChol", "CholCheck", "BMI", "Smoker",
-    "Stroke", "HeartDiseaseorAttack", "PhysActivity", "Fruits", "Veggies",
-    "HvyAlcoholConsump", "AnyHealthcare", "NoDocbcCost", "GenHlth",
-    "MentHlth", "PhysHlth", "DiffWalk", "Sex", "Age",
-    "Education", "Income"
+    "Pima_Pregnancies", "Pima_Glucose", "Pima_BloodPressure", 
+    "Pima_SkinThickness", "Pima_Insulin", "Pima_DiabetesPedigreeFunction",
+    "BMI", "Age", 
+    "CDC_BMI", "CDC_Age_Category",
+    "CDC_HighBP", "CDC_HighChol", "CDC_CholCheck", "CDC_Smoker",
+    "CDC_Stroke", "CDC_HeartDiseaseorAttack", "CDC_PhysActivity", 
+    "CDC_Fruits", "CDC_Veggies", "CDC_HvyAlcoholConsump", 
+    "CDC_AnyHealthcare", "CDC_NoDocbcCost", "CDC_GenHlth",
+    "CDC_MentHlth", "CDC_PhysHlth", "CDC_DiffWalk", 
+    "CDC_Sex", "CDC_Education", "CDC_Income"
 ]
 
 # directories for saving explanation images
@@ -56,16 +74,60 @@ def single_input_to_df(form_dict):
         except:
             return default
 
-    # extract all expected features
-    for feat in EXPECTED_FEATURES:
-        # Use default value of 5 for Income (median income bracket) since it's not in the UI
-        if feat == "Income":
-            row[feat] = 5
-        else:
-            row[feat] = get_val(feat)
+    # 1. Map Clinical Features (Pima)
+    # Defaults are TRAINING DATA MEDIANS for accurate "average patient" predictions
+    row["Pima_Pregnancies"] = get_val("Pregnancies", 5)
+    row["Pima_Glucose"] = get_val("Glucose", 132)        # Training median=132
+    row["Pima_BloodPressure"] = get_val("BloodPressure", 74) # Training median=74
+    row["Pima_SkinThickness"] = get_val("SkinThickness", 12) # Training median=12
+    row["Pima_Insulin"] = get_val("Insulin", 0)           # Training median=0 (many zeros in Pima data)
+    row["Pima_DiabetesPedigreeFunction"] = get_val("DiabetesPedigreeFunction", 0.452) # Training median
 
-    # Special handling if needed (e.g. BMI calc if Height/Weight provided but BMI not)
-    # The form will now simply provide BMI directly for simplicity given the new dataset
+    # 2. Map Common Features (Age/BMI)
+    # NOTE: The form sends Age as a BRFSS category (1-13), NOT raw age in years.
+    # 1=18-24, 2=25-29, 3=30-34, 4=35-39, 5=40-44, 6=45-49, 7=50-54,
+    # 8=55-59, 9=60-64, 10=65-69, 11=70-74, 12=75-79, 13=80+
+    age_category = int(get_val("Age", 3))  # Default category 3 (30-34)
+    bmi_raw = get_val("BMI", 25.0)
+
+    # Reverse-map category to approximate midpoint age for the raw "Age" feature
+    # These match the combine_datasets.py mapping used during training
+    AGE_CATEGORY_TO_MIDPOINT = {
+        1: 21.5, 2: 27.0, 3: 32.0, 4: 37.0, 5: 42.0, 6: 47.0, 7: 52.0,
+        8: 57.0, 9: 62.0, 10: 67.0, 11: 72.0, 12: 77.0, 13: 82.0
+    }
+    age_raw = AGE_CATEGORY_TO_MIDPOINT.get(age_category, 47.0)  # Default to median age category
+
+    row["BMI"] = bmi_raw
+    row["Age"] = age_raw
+    
+    # CDC Duplicates
+    row["CDC_BMI"] = bmi_raw
+    
+    # Use the category directly from the form (already 1-13)
+    row["CDC_Age_Category"] = age_category
+
+    # 3. Map CDC Lifestyle Features
+    # Note: Form inputs match CDC suffixes usually e.g. "HighBP"
+    row["CDC_HighBP"] = get_val("HighBP", 0)
+    row["CDC_HighChol"] = get_val("HighChol", 0)
+    row["CDC_CholCheck"] = get_val("CholCheck", 1)
+    row["CDC_Smoker"] = get_val("Smoker", 0)
+    row["CDC_Stroke"] = get_val("Stroke", 0)
+    row["CDC_HeartDiseaseorAttack"] = get_val("HeartDiseaseorAttack", 0)
+    row["CDC_PhysActivity"] = get_val("PhysActivity", 1)
+    row["CDC_Fruits"] = get_val("Fruits", 1)
+    row["CDC_Veggies"] = get_val("Veggies", 1)
+    row["CDC_HvyAlcoholConsump"] = get_val("HvyAlcoholConsump", 0)
+    row["CDC_AnyHealthcare"] = get_val("AnyHealthcare", 1)
+    row["CDC_NoDocbcCost"] = get_val("NoDocbcCost", 0)
+    row["CDC_GenHlth"] = get_val("GenHlth", 2)  # Training median=2 (Very Good)
+    row["CDC_MentHlth"] = get_val("MentHlth", 0)
+    row["CDC_PhysHlth"] = get_val("PhysHlth", 0)
+    row["CDC_DiffWalk"] = get_val("DiffWalk", 0)
+    row["CDC_Sex"] = get_val("Sex", 0)
+    row["CDC_Education"] = get_val("Education", 5)  # Training median=5
+    row["CDC_Income"] = get_val("Income", 7)  # Training median=7
     
     return pd.DataFrame([row])
 
@@ -109,11 +171,35 @@ def generate_care_plan(row_dict, shap_values, proba_percent):
     
     # 3. Rich Explanations Dictionary (Why & How)
     EXPLANATIONS = {
-        "HighBP": {
+        "Pima_Glucose": {
+            "why": "Blood Sugar Level",
+            "how": "Elevated fasting glucose indicates your body is struggling to process sugar, a direct marker of diabetes risk."
+        },
+        "Pima_BloodPressure": {
+            "why": "Cardiovascular Strain",
+            "how": "Higher diastolic pressure suggests your heart is working harder between beats, often linked to insulin resistance."
+        },
+        "Pima_Insulin": {
+            "why": "Insulin Resistance",
+            "how": "High insulin levels often mean your body is producing more to compensate for cells not responding, a precursor to burnout."
+        },
+        "Pima_SkinThickness": {
+             "why": "Body Fat Distribution",
+             "how": "Triceps skinfold thickness estimates subcutaneous body fat, which correlates with overall metabolic health."
+        },
+        "Pima_DiabetesPedigreeFunction": {
+             "why": "Genetic Predisposition",
+             "how": "A higher score indicates a strong family history, meaning your genetic baseline risk is elevated."
+        },
+        "Pima_Pregnancies": {
+             "why": "Gestational Stress",
+             "how": "Multiple pregnancies can place repeated metabolic stress on the body, sometimes unmasking latent insulin issues."
+        },
+        "CDC_HighBP": {
             "why": "Systemic Strain",
             "how": "Chronic high blood pressure damages blood vessels, forcing the heart to work harder and increasing the risk of metabolic complications."
         },
-        "HighChol": {
+        "CDC_HighChol": {
             "why": "Arterial Plaque Build-up",
             "how": "Elevated cholesterol leads to plaque accumulation in arteries, restricting blood flow and raising cardiovascular and diabetes risk."
         },
@@ -121,43 +207,43 @@ def generate_care_plan(row_dict, shap_values, proba_percent):
             "why": "Adipose Tissue Impact",
             "how": "Higher body mass, particularly visceral fat, promotes inflammation and insulin resistance, the core drivers of Type 2 diabetes."
         },
-        "Smoker": {
+        "CDC_Smoker": {
             "why": "Oxidative Stress",
             "how": "Smoking introduces toxins that damage cells, causing oxidative stress and directly impairing insulin sensitivity."
         },
-        "PhysActivity": {
+        "CDC_PhysActivity": {
             "why": "Sedentary Lifestyle",
             "how": "Lack of regular muscle engagement reduces glucose uptake from the blood, leading to higher sustained blood sugar levels."
         },
-        "Fruits": {
+        "CDC_Fruits": {
             "why": "Micronutrient Deficiency",
             "how": "A diet low in whole fruits lacks essential fiber and antioxidants that help regulate blood sugar absorption."
         },
-        "Veggies": {
+        "CDC_Veggies": {
             "why": "Low Dietary Fiber",
             "how": "Vegetables are a primary source of fiber, which slows digestion and prevents blood sugar spikes."
         },
-        "HvyAlcoholConsump": {
+        "CDC_HvyAlcoholConsump": {
             "why": "Liver Stress",
             "how": "Excessive alcohol consumption places strain on the liver, disrupting its ability to regulate blood glucose effectively."
         },
-        "GenHlth": {
+        "CDC_GenHlth": {
             "why": "Overall Health Status",
             "how": "Your self-reported poor health often correlates with underlying undiagnosed inflammation or chronic stress."
         },
-        "MentHlth": {
+        "CDC_MentHlth": {
             "why": "Psychological Stress",
             "how": "Frequent mental distress can elevate cortisol levels, a hormone that naturally increases blood sugar."
         },
-        "PhysHlth": {
+        "CDC_PhysHlth": {
             "why": "Physical Limitation",
             "how": "Frequent physical illness limits your ability to maintain an active, calorie-burning lifestyle."
         },
-        "DiffWalk": {
+        "CDC_DiffWalk": {
             "why": "Mobility Restriction",
             "how": "Difficulty walking severely limits physical activity options, contributing to weight gain and muscle atrophy."
         },
-        "Sex": {
+        "CDC_Sex": {
             "why": "Biological Factors",
             "how": "Biological differences can influence fat distribution and hormonal baselines affecting risk calculation."
         },
@@ -165,27 +251,27 @@ def generate_care_plan(row_dict, shap_values, proba_percent):
             "why": "Metabolic Aging",
             "how": "As we age, pancreatic function naturally declines and cells become more resistant to insulin."
         },
-        "Education": {
+        "CDC_Education": {
             "why": "Socioeconomic Correlation",
             "how": "Statistical models often find correlations between education levels and access to healthcare or health literacy."
         },
-         "HeartDiseaseorAttack": {
+         "CDC_HeartDiseaseorAttack": {
             "why": "Comorbidity",
             "how": "Prior cardiovascular events indicate an existing compromise in vascular health, which is closely linked to diabetes pathology."
         },
-        "Stroke": {
+        "CDC_Stroke": {
             "why": "Vascular History",
             "how": "A history of stroke suggests significant vascular risk factors are already present."
         },
-         "CholCheck": {
+         "CDC_CholCheck": {
             "why": "Preventative Gap",
             "how": "Irregular cholesterol screening may mean missed opportunities to manage lipid levels early."
         }
     }
     
     ACTIONABLE = [
-        "BMI", "Smoker", "PhysActivity", "Fruits", "Veggies", 
-        "HvyAlcoholConsump", "HighBP", "HighChol"
+        "BMI", "CDC_Smoker", "CDC_PhysActivity", "CDC_Fruits", "CDC_Veggies", 
+        "CDC_HvyAlcoholConsump", "CDC_HighBP", "CDC_HighChol", "Pima_Glucose", "Pima_BloodPressure", "Pima_Insulin"
     ]
     
     # 4. Build Action Plan (Modifiable only)
@@ -199,24 +285,28 @@ def generate_care_plan(row_dict, shap_values, proba_percent):
         if feat not in ACTIONABLE:
             continue
             
-        if feat == "HighBP" and val == 1:
+        if feat == "CDC_HighBP" and val == 1:
             action_text = "• Blood Pressure: Management is critical. A DASH diet (low sodium) and stress reduction are proven first-line defenses."
-        elif feat == "HighChol" and val == 1:
+        elif feat == "CDC_HighChol" and val == 1:
             action_text = "• Cholesterol: Swap saturated fats (red meat, butter) for healthy fats (nuts, olive oil) to improve lipid profiles."
         elif feat == "BMI":
             if val > 25:
                  action_text = f"• Weight: Your BMI is {val}. Even a modest 5% weight loss improves insulin sensitivity dramatically."
-        elif feat == "Smoker" and val == 1:
+        elif feat == "CDC_Smoker" and val == 1:
             action_text = "• Smoking: Quitting is the most effective way to restore your body's cardiovascular resilience."
-        elif feat == "PhysActivity" and val == 0:
+        elif feat == "CDC_PhysActivity" and val == 0:
             action_text = "• Activity: Aim for 150 mins/week of brisk walking. Muscles are the main consumers of blood sugar."
-        elif feat == "Fruits" and val == 0:
+        elif feat == "CDC_Fruits" and val == 0:
             action_text = "• Nutrition: Add one serving of whole fruit (berries, apple) to your daily routine for fiber."
-        elif feat == "Veggies" and val == 0:
+        elif feat == "CDC_Veggies" and val == 0:
              action_text = "• Nutrition: Aim to fill half your plate with non-starchy vegetables at every meal."
-        elif feat == "HvyAlcoholConsump" and val == 1:
+        elif feat == "CDC_HvyAlcoholConsump" and val == 1:
             action_text = "• Alcohol: Reducing intake relieves metabolic stress on the liver."
-            
+        elif feat == "Pima_Glucose" and val > 140:
+             action_text = f"• Blood Sugar: Your glucose ({val}) is elevated. Consult your doctor for an A1C test."
+        elif feat == "Pima_Insulin" and val > 160:
+             action_text = "• Insulin: High insulin suggests resistance. Intermittent fasting or carb reduction can help sensitive cells."
+
         if action_text:
             plan["actions"].append(action_text)
             
@@ -259,6 +349,9 @@ def generate_anchor_rule(model, X_raw, X_train_numpy, feature_names=EXPECTED_FEA
     Generate Anchors rule. Safe against shape mismatches.
     """
     try:
+        if AnchorTabular is None:
+             return ["Anchors library not installed."]
+
         # Ensure X_train_numpy matches feature_names shape
         # expecting (n_samples, n_features)
         if len(X_train_numpy.shape) == 2:
@@ -375,6 +468,10 @@ def generate_lime_plot(model, scaler, X_raw, training_df_raw, feature_names=EXPE
         return probs
 
     try:
+        if LimeTabularExplainer is None:
+            print("LIME not installed.")
+            return ""
+
         explainer = LimeTabularExplainer(
             training_data=train_np,
             feature_names=feature_names,
