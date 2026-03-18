@@ -33,37 +33,44 @@
               <label class="form-label">Glucose (mg/dL)</label>
               <input type="number" name="Glucose" class="form-control" placeholder="e.g. 120"
                 value="{{ form_data.get('Glucose', '') }}">
+              <div class="form-text">Normal: 70–140 &nbsp;|&nbsp; Pre-diabetic: 141–199 &nbsp;|&nbsp; Diabetic: ≥200
+              </div>
             </div>
 
             <div class="col-md-4">
               <label class="form-label">Blood Pressure (mm Hg)</label>
               <input type="number" name="BloodPressure" class="form-control" placeholder="e.g. 72"
                 value="{{ form_data.get('BloodPressure', '') }}">
+              <div class="form-text">Normal diastolic: 60–80 &nbsp;|&nbsp; High: ≥90 mm Hg</div>
             </div>
 
             <div class="col-md-4">
               <label class="form-label">Insulin (mu U/ml)</label>
               <input type="number" name="Insulin" class="form-control" placeholder="e.g. 80"
                 value="{{ form_data.get('Insulin', '') }}">
+              <div class="form-text">Normal fasting: 16–166 mu U/ml &nbsp;|&nbsp; High: >200</div>
             </div>
 
             <div class="col-md-4">
               <label class="form-label">Skin Thickness (mm)</label>
               <input type="number" name="SkinThickness" class="form-control" placeholder="e.g. 20"
                 value="{{ form_data.get('SkinThickness', '') }}">
+              <div class="form-text">Triceps skinfold. Typical range: 10–50 mm</div>
             </div>
 
             <div class="col-md-4">
               <label class="form-label">Pregnancies</label>
-              <input type="number" name="Pregnancies" class="form-control" placeholder="e.g. 0"
+              <input type="number" name="Pregnancies" class="form-control" placeholder="e.g. 0" min="0" max="20"
                 value="{{ form_data.get('Pregnancies', '') }}">
+              <div class="form-text">Number of times pregnant (enter 0 if male or never pregnant)</div>
             </div>
 
             <div class="col-md-4">
-              <label class="form-label">Diabetes Pedigree (Family Hist)</label>
+              <label class="form-label">Diabetes Pedigree (Family History)</label>
               <input type="number" step="0.01" name="DiabetesPedigreeFunction" class="form-control"
                 placeholder="e.g. 0.5" value="{{ form_data.get('DiabetesPedigreeFunction', '') }}">
-              <div class="form-text">0.0 (None) - 2.5 (High Risk)</div>
+              <div class="form-text">0.0 = None &nbsp;|&nbsp; 0.3–0.6 = Moderate &nbsp;|&nbsp; ≥1.0 = High genetic risk
+              </div>
             </div>
 
             <hr class="my-4">
@@ -77,20 +84,21 @@
               <label class="form-label">Age Group</label>
               <select name="Age" class="form-select" required>
                 <!-- BRFSS Age Categories: 1=18-24 ... 13=80+ -->
-                <option value="1" {% if form_data.get('Age')=='1' %}selected{% endif %}>18-24</option>
-                <option value="2" {% if form_data.get('Age')=='2' %}selected{% endif %}>25-29</option>
-                <option value="3" {% if form_data.get('Age')=='3' %}selected{% endif %}>30-34</option>
-                <option value="4" {% if form_data.get('Age')=='4' %}selected{% endif %}>35-39</option>
-                <option value="5" {% if form_data.get('Age')=='5' %}selected{% endif %}>40-44</option>
-                <option value="6" {% if form_data.get('Age')=='6' %}selected{% endif %}>45-49</option>
-                <option value="7" {% if form_data.get('Age')=='7' %}selected{% endif %}>50-54</option>
-                <option value="8" {% if form_data.get('Age')=='8' %}selected{% endif %}>55-59</option>
-                <option value="9" {% if form_data.get('Age')=='9' %}selected{% endif %}>60-64</option>
-                <option value="10" {% if form_data.get('Age')=='10' %}selected{% endif %}>65-69</option>
-                <option value="11" {% if form_data.get('Age')=='11' %}selected{% endif %}>70-74</option>
-                <option value="12" {% if form_data.get('Age')=='12' %}selected{% endif %}>75-79</option>
+                <option value="1" {% if form_data.get('Age')=='1' %}selected{% endif %}>18–24</option>
+                <option value="2" {% if form_data.get('Age')=='2' %}selected{% endif %}>25–29</option>
+                <option value="3" {% if form_data.get('Age')=='3' %}selected{% endif %}>30–34</option>
+                <option value="4" {% if form_data.get('Age')=='4' %}selected{% endif %}>35–39</option>
+                <option value="5" {% if form_data.get('Age')=='5' %}selected{% endif %}>40–44</option>
+                <option value="6" {% if form_data.get('Age')=='6' %}selected{% endif %}>45–49</option>
+                <option value="7" {% if form_data.get('Age')=='7' %}selected{% endif %}>50–54</option>
+                <option value="8" {% if form_data.get('Age')=='8' %}selected{% endif %}>55–59</option>
+                <option value="9" {% if form_data.get('Age')=='9' %}selected{% endif %}>60–64</option>
+                <option value="10" {% if form_data.get('Age')=='10' %}selected{% endif %}>65–69</option>
+                <option value="11" {% if form_data.get('Age')=='11' %}selected{% endif %}>70–74</option>
+                <option value="12" {% if form_data.get('Age')=='12' %}selected{% endif %}>75–79</option>
                 <option value="13" {% if form_data.get('Age')=='13' %}selected{% endif %}>80+</option>
               </select>
+              <div class="form-text">Select your current age bracket</div>
             </div>
 
             <div class="col-md-6">
@@ -99,20 +107,25 @@
                 <option value="0" {% if form_data.get('Sex')=='0' %}selected{% endif %}>Female</option>
                 <option value="1" {% if form_data.get('Sex')=='1' %}selected{% endif %}>Male</option>
               </select>
+              <div class="form-text">Biological sex assigned at birth</div>
             </div>
 
             <div class="col-md-6">
               <label class="form-label">Education Level</label>
               <select name="Education" class="form-select" required>
-                <option value="1" {% if form_data.get('Education')=='1' %}selected{% endif %}>Never attended school
+                <option value="1" {% if form_data.get('Education')=='1' %}selected{% endif %}>1 – Never attended school
                 </option>
-                <option value="2" {% if form_data.get('Education')=='2' %}selected{% endif %}>Elementary only</option>
-                <option value="3" {% if form_data.get('Education')=='3' %}selected{% endif %}>Some high school</option>
-                <option value="4" {% if form_data.get('Education')=='4' %}selected{% endif %}>High school graduate
+                <option value="2" {% if form_data.get('Education')=='2' %}selected{% endif %}>2 – Elementary only
                 </option>
-                <option value="5" {% if form_data.get('Education')=='5' %}selected{% endif %}>Some college</option>
-                <option value="6" {% if form_data.get('Education')=='6' %}selected{% endif %}>College graduate</option>
+                <option value="3" {% if form_data.get('Education')=='3' %}selected{% endif %}>3 – Some high school
+                </option>
+                <option value="4" {% if form_data.get('Education')=='4' %}selected{% endif %}>4 – High school graduate
+                </option>
+                <option value="5" {% if form_data.get('Education')=='5' %}selected{% endif %}>5 – Some college</option>
+                <option value="6" {% if form_data.get('Education')=='6' %}selected{% endif %}>6 – College graduate
+                </option>
               </select>
+              <div class="form-text">Highest level of education completed</div>
             </div>
 
             <!-- Health Indicators -->
@@ -126,6 +139,7 @@
                 <option value="0" {% if form_data.get('HighBP')=='0' %}selected{% endif %}>No</option>
                 <option value="1" {% if form_data.get('HighBP')=='1' %}selected{% endif %}>Yes</option>
               </select>
+              <div class="form-text">Diagnosed hypertension (systolic ≥130 or diastolic ≥80 mm Hg)</div>
             </div>
 
             <div class="col-md-4">
@@ -134,149 +148,181 @@
                 <option value="0" {% if form_data.get('HighChol')=='0' %}selected{% endif %}>No</option>
                 <option value="1" {% if form_data.get('HighChol')=='1' %}selected{% endif %}>Yes</option>
               </select>
+              <div class="form-text">Total cholesterol ≥200 mg/dL diagnosed by a doctor</div>
             </div>
 
             <div class="col-md-4">
-              <label class="form-label">Cholesterol Check (Last 5y)?</label>
+              <label class="form-label">Cholesterol Check (Last 5 years)?</label>
               <select name="CholCheck" class="form-select">
                 <option value="1" {% if form_data.get('CholCheck')=='1' %}selected{% endif %}>Yes</option>
                 <option value="0" {% if form_data.get('CholCheck')=='0' %}selected{% endif %}>No</option>
               </select>
+              <div class="form-text">Had blood cholesterol tested in the past 5 years</div>
+            </div>
+
+            <!-- BMI via Height & Weight -->
+            <div class="col-md-4">
+              <label class="form-label">Height (cm)</label>
+              <input type="number" step="0.1" id="height_input" name="Height" class="form-control"
+                placeholder="e.g. 170" value="{{ form_data.get('Height', '') }}" required>
+              <div class="form-text">Typical adult range: 140–210 cm</div>
             </div>
 
             <div class="col-md-4">
-              <label class="form-label">BMI</label>
-              <input type="number" step="0.1" name="BMI" class="form-control" value="{{ form_data.get('BMI', '25.0') }}"
-                required>
-              <small class="text-muted">Body Mass Index</small>
+              <label class="form-label">Weight (kg)</label>
+              <input type="number" step="0.1" id="weight_input" name="Weight" class="form-control" placeholder="e.g. 70"
+                value="{{ form_data.get('Weight', '') }}" required>
+              <div class="form-text">Typical adult range: 40–180 kg</div>
             </div>
 
             <div class="col-md-4">
-              <label class="form-label">Smoker (>= 100 cigs lifetime)?</label>
-              <select name="Smoker" class="form-select">
-                <option value="0" {% if form_data.get('Smoker')=='0' %}selected{% endif %}>No</option>
-                <option value="1" {% if form_data.get('Smoker')=='1' %}selected{% endif %}>Yes</option>
-              </select>
+              <label class="form-label">BMI <span class="badge bg-secondary ms-1"
+                  style="font-size:0.7rem;">Auto-calculated</span></label>
+              <input type="number" step="0.1" id="bmi_input" name="BMI" class="form-control bg-light"
+                value="{{ form_data.get('BMI', '') }}" readonly>
+              <div class="form-text">Underweight: <18.5 &nbsp;|&nbsp; Normal: 18.5–24.9 &nbsp;|&nbsp; Overweight:
+                  25–29.9 &nbsp;|&nbsp; Obese: ≥30</div>
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label">Smoker (≥ 100 cigarettes lifetime)?</label>
+                <select name="Smoker" class="form-select">
+                  <option value="0" {% if form_data.get('Smoker')=='0' %}selected{% endif %}>No</option>
+                  <option value="1" {% if form_data.get('Smoker')=='1' %}selected{% endif %}>Yes</option>
+                </select>
+                <div class="form-text">Select Yes if smoked ≥100 cigarettes total in your lifetime</div>
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label">Stroke History?</label>
+                <select name="Stroke" class="form-select">
+                  <option value="0" {% if form_data.get('Stroke')=='0' %}selected{% endif %}>No</option>
+                  <option value="1" {% if form_data.get('Stroke')=='1' %}selected{% endif %}>Yes</option>
+                </select>
+                <div class="form-text">Ever told by a doctor that you had a stroke</div>
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label">Heart Disease or Heart Attack?</label>
+                <select name="HeartDiseaseorAttack" class="form-select">
+                  <option value="0" {% if form_data.get('HeartDiseaseorAttack')=='0' %}selected{% endif %}>No</option>
+                  <option value="1" {% if form_data.get('HeartDiseaseorAttack')=='1' %}selected{% endif %}>Yes</option>
+                </select>
+                <div class="form-text">Diagnosed coronary heart disease or prior heart attack</div>
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label">Difficulty Walking?</label>
+                <select name="DiffWalk" class="form-select">
+                  <option value="0" {% if form_data.get('DiffWalk')=='0' %}selected{% endif %}>No</option>
+                  <option value="1" {% if form_data.get('DiffWalk')=='1' %}selected{% endif %}>Yes</option>
+                </select>
+                <div class="form-text">Serious difficulty walking or climbing stairs</div>
+              </div>
+
+              <!-- Lifestyle -->
+              <div class="col-12 mt-4">
+                <h6 class="section-heading section-lifestyle"><i class="bi bi-bicycle me-2"></i>Lifestyle &amp; General
+                  Health
+                </h6>
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label">Physical Activity (Past 30 days)?</label>
+                <select name="PhysActivity" class="form-select">
+                  <option value="1" {% if form_data.get('PhysActivity')=='1' %}selected{% endif %}>Yes</option>
+                  <option value="0" {% if form_data.get('PhysActivity')=='0' %}selected{% endif %}>No</option>
+                </select>
+                <div class="form-text">Exercise or physical activity outside of regular job in the past 30 days</div>
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label">Consumes Fruits Daily?</label>
+                <select name="Fruits" class="form-select">
+                  <option value="1" {% if form_data.get('Fruits')=='1' %}selected{% endif %}>Yes</option>
+                  <option value="0" {% if form_data.get('Fruits')=='0' %}selected{% endif %}>No</option>
+                </select>
+                <div class="form-text">At least one serving of fruit per day (fresh, frozen, or canned)</div>
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label">Consumes Vegetables Daily?</label>
+                <select name="Veggies" class="form-select">
+                  <option value="1" {% if form_data.get('Veggies')=='1' %}selected{% endif %}>Yes</option>
+                  <option value="0" {% if form_data.get('Veggies')=='0' %}selected{% endif %}>No</option>
+                </select>
+                <div class="form-text">At least one serving of vegetables per day</div>
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label">Heavy Alcohol Consumption?</label>
+                <select name="HvyAlcoholConsump" class="form-select">
+                  <option value="0" {% if form_data.get('HvyAlcoholConsump')=='0' %}selected{% endif %}>No</option>
+                  <option value="1" {% if form_data.get('HvyAlcoholConsump')=='1' %}selected{% endif %}>Yes</option>
+                </select>
+                <div class="form-text">Men ≥14 drinks/week &nbsp;|&nbsp; Women ≥7 drinks/week</div>
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label">General Health</label>
+                <select name="GenHlth" class="form-select" required>
+                  <option value="1" {% if form_data.get('GenHlth')=='1' %}selected{% endif %}>1 – Excellent</option>
+                  <option value="2" {% if form_data.get('GenHlth')=='2' %}selected{% endif %}>2 – Very Good</option>
+                  <option value="3" {% if form_data.get('GenHlth')=='3' %}selected{% endif %}>3 – Good</option>
+                  <option value="4" {% if form_data.get('GenHlth')=='4' %}selected{% endif %}>4 – Fair</option>
+                  <option value="5" {% if form_data.get('GenHlth')=='5' %}selected{% endif %}>5 – Poor</option>
+                </select>
+                <div class="form-text">Your overall self-rated health (1 = best, 5 = worst)</div>
+              </div>
+
+              <div class="col-md-4"></div>
+
+              <div class="col-md-6">
+                <label class="form-label">Days Mental Health Not Good (Last 30 days)</label>
+                <input type="number" name="MentHlth" class="form-control" min="0" max="30"
+                  value="{{ form_data.get('MentHlth', '0') }}">
+                <div class="form-text">Range: 0–30 &nbsp;|&nbsp; 0 = All days had good mental health</div>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Days Physical Health Not Good (Last 30 days)</label>
+                <input type="number" name="PhysHlth" class="form-control" min="0" max="30"
+                  value="{{ form_data.get('PhysHlth', '0') }}">
+                <div class="form-text">Range: 0–30 &nbsp;|&nbsp; Includes illness and injury days</div>
+              </div>
+
+              <!-- Healthcare Access -->
+              <div class="col-12 mt-4">
+                <h6 class="section-heading section-healthcare"><i class="bi bi-hospital me-2"></i>Healthcare Access</h6>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Any Healthcare Coverage?</label>
+                <select name="AnyHealthcare" class="form-select">
+                  <option value="1" {% if form_data.get('AnyHealthcare')=='1' %}selected{% endif %}>Yes</option>
+                  <option value="0" {% if form_data.get('AnyHealthcare')=='0' %}selected{% endif %}>No</option>
+                </select>
+                <div class="form-text">Health insurance, HMO, Medicare, or any healthcare plan</div>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Could Not See Doctor Due to Cost?</label>
+                <select name="NoDocbcCost" class="form-select">
+                  <option value="0" {% if form_data.get('NoDocbcCost')=='0' %}selected{% endif %}>No</option>
+                  <option value="1" {% if form_data.get('NoDocbcCost')=='1' %}selected{% endif %}>Yes</option>
+                </select>
+                <div class="form-text">In the past 12 months, needed to see a doctor but couldn't due to cost</div>
+              </div>
+
+
+              <!-- Submit Button -->
+              <div class="col-12 mt-5">
+                <button type="submit" class="btn btn-success btn-lg w-100">
+                  Analyze Risk Profile
+                </button>
+              </div>
+
             </div>
-
-            <div class="col-md-4">
-              <label class="form-label">Stroke History?</label>
-              <select name="Stroke" class="form-select">
-                <option value="0" {% if form_data.get('Stroke')=='0' %}selected{% endif %}>No</option>
-                <option value="1" {% if form_data.get('Stroke')=='1' %}selected{% endif %}>Yes</option>
-              </select>
-            </div>
-
-            <div class="col-md-6">
-              <label class="form-label">Heart Disease or Attack?</label>
-              <select name="HeartDiseaseorAttack" class="form-select">
-                <option value="0" {% if form_data.get('HeartDiseaseorAttack')=='0' %}selected{% endif %}>No</option>
-                <option value="1" {% if form_data.get('HeartDiseaseorAttack')=='1' %}selected{% endif %}>Yes</option>
-              </select>
-            </div>
-
-            <div class="col-md-6">
-              <label class="form-label">Difficulty Walking?</label>
-              <select name="DiffWalk" class="form-select">
-                <option value="0" {% if form_data.get('DiffWalk')=='0' %}selected{% endif %}>No</option>
-                <option value="1" {% if form_data.get('DiffWalk')=='1' %}selected{% endif %}>Yes</option>
-              </select>
-            </div>
-
-            <!-- Lifestyle -->
-            <div class="col-12 mt-4">
-              <h6 class="section-heading section-lifestyle"><i class="bi bi-bicycle me-2"></i>Lifestyle & General Health
-              </h6>
-            </div>
-
-            <div class="col-md-4">
-              <label class="form-label">Physical Activity (Past 30 days)?</label>
-              <select name="PhysActivity" class="form-select">
-                <option value="1" {% if form_data.get('PhysActivity')=='1' %}selected{% endif %}>Yes</option>
-                <option value="0" {% if form_data.get('PhysActivity')=='0' %}selected{% endif %}>No</option>
-              </select>
-            </div>
-
-            <div class="col-md-4">
-              <label class="form-label">Consumes Fruits Daily?</label>
-              <select name="Fruits" class="form-select">
-                <option value="1" {% if form_data.get('Fruits')=='1' %}selected{% endif %}>Yes</option>
-                <option value="0" {% if form_data.get('Fruits')=='0' %}selected{% endif %}>No</option>
-              </select>
-            </div>
-
-            <div class="col-md-4">
-              <label class="form-label">Consumes Veggies Daily?</label>
-              <select name="Veggies" class="form-select">
-                <option value="1" {% if form_data.get('Veggies')=='1' %}selected{% endif %}>Yes</option>
-                <option value="0" {% if form_data.get('Veggies')=='0' %}selected{% endif %}>No</option>
-              </select>
-            </div>
-
-            <div class="col-md-4">
-              <label class="form-label">Heavy Alcohol Consumption?</label>
-              <select name="HvyAlcoholConsump" class="form-select">
-                <option value="0" {% if form_data.get('HvyAlcoholConsump')=='0' %}selected{% endif %}>No</option>
-                <option value="1" {% if form_data.get('HvyAlcoholConsump')=='1' %}selected{% endif %}>Yes</option>
-              </select>
-              <div class="form-text">Adult men >= 14 drinks/week, women >= 7</div>
-            </div>
-
-            <div class="col-md-4">
-              <label class="form-label">General Health (1=Excellent, 5=Poor)</label>
-              <select name="GenHlth" class="form-select" required>
-                <option value="1" {% if form_data.get('GenHlth')=='1' %}selected{% endif %}>1 - Excellent</option>
-                <option value="2" {% if form_data.get('GenHlth')=='2' %}selected{% endif %}>2 - Very Good</option>
-                <option value="3" {% if form_data.get('GenHlth')=='3' %}selected{% endif %}>3 - Good</option>
-                <option value="4" {% if form_data.get('GenHlth')=='4' %}selected{% endif %}>4 - Fair</option>
-                <option value="5" {% if form_data.get('GenHlth')=='5' %}selected{% endif %}>5 - Poor</option>
-              </select>
-            </div>
-
-            <div class="col-md-4"></div>
-
-            <div class="col-md-6">
-              <label class="form-label">Days Mental Health Not Good (Last 30 days)</label>
-              <input type="number" name="MentHlth" class="form-control" min="0" max="30"
-                value="{{ form_data.get('MentHlth', '0') }}">
-            </div>
-
-            <div class="col-md-6">
-              <label class="form-label">Days Physical Health Not Good (Last 30 days)</label>
-              <input type="number" name="PhysHlth" class="form-control" min="0" max="30"
-                value="{{ form_data.get('PhysHlth', '0') }}">
-            </div>
-
-            <!-- Healthcare Access -->
-            <div class="col-12 mt-4">
-              <h6 class="section-heading section-healthcare"><i class="bi bi-hospital me-2"></i>Healthcare Access</h6>
-            </div>
-
-            <div class="col-md-6">
-              <label class="form-label">Any Healthcare Coverage?</label>
-              <select name="AnyHealthcare" class="form-select">
-                <option value="1" {% if form_data.get('AnyHealthcare')=='1' %}selected{% endif %}>Yes</option>
-                <option value="0" {% if form_data.get('AnyHealthcare')=='0' %}selected{% endif %}>No</option>
-              </select>
-            </div>
-
-            <div class="col-md-6">
-              <label class="form-label">Could Not See Doctor Due to Cost?</label>
-              <select name="NoDocbcCost" class="form-select">
-                <option value="0" {% if form_data.get('NoDocbcCost')=='0' %}selected{% endif %}>No</option>
-                <option value="1" {% if form_data.get('NoDocbcCost')=='1' %}selected{% endif %}>Yes</option>
-              </select>
-            </div>
-
-
-            <!-- Submit Button -->
-            <div class="col-12 mt-5">
-              <button type="submit" class="btn btn-success btn-lg w-100">
-                Analyze Risk Profile
-              </button>
-            </div>
-
-          </div>
         </form>
 
       </div>
@@ -352,6 +398,7 @@
                   {{ prediction.probability }}<span style="font-size: 1rem;">%</span>
                 </h2>
               </div>
+
 
               <!-- Labels -->
               <span

@@ -19,7 +19,7 @@
 
 ## 1. Executive Summary
 
-**GlucoVision** is an advanced diabetes risk prediction system that combines classical machine learning with state-of-the-art Explainable AI (XAI) techniques to provide clinically actionable insights. The project utilizes the **BRFSS 2015 Health Indicators dataset** (70,692 samples) with a highly tuned **XGBoost classifier** achieving **75.27% accuracy** and **AUC-ROC score of 0.8306**.
+**GlucoVision** is an advanced diabetes risk prediction system that combines classical machine learning with state-of-the-art Explainable AI (XAI) techniques to provide clinically actionable insights. The project utilizes the **Combined CDC BRFSS 2015 & PIMA dataset** (150,000 samples) with a highly tuned **XGBoost classifier** achieving **67.54% accuracy** and **AUC-ROC score of 0.7870**.
 
 **Key Distinguishing Features:**
 - **Per-instance XAI explanations** (SHAP, LIME, Anchors) for clinical transparency
@@ -41,7 +41,7 @@ Type 2 diabetes affects over 422 million people globally. Early detection and ri
 
 ### 2.2 Solution Approach
 GlucoVision addresses these gaps by:
-1. **Scaling up**: Using BRFSS 2015 dataset with 70k+ samples and 21 health indicators
+1. **Scaling up**: Using BRFSS 2015 dataset with 70k+ samples and 31 comprehensive health indicators
 2. **Explainability**: Integrating 4 complementary XAI methods (SHAP, LIME, DiCE, Anchors)
 3. **Actionability**: Generating personalized care plans with clinical rationale
 4. **Deployment**: Building a full-stack web application with authentication, PDF parsing, and dataset analysis
@@ -55,7 +55,7 @@ GlucoVision addresses these gaps by:
 **Behavioral Risk Factor Surveillance System (BRFSS) 2015**
 - **Provider**: CDC (Centers for Disease Control and Prevention)
 - **Collection Method**: Annual telephone health survey
-- **Sample Size**: 70,692 respondents (after 50-50 class balancing)
+- **Sample Size**: 150,000 respondents (after combined BRFSS+PIMA merging)
 - **Original Size**: 253,680 respondents (before balancing)
 - **Geographic Coverage**: All 50 US states + territories
 
@@ -63,10 +63,10 @@ GlucoVision addresses these gaps by:
 
 ```
 File: diabetes_binary_5050split_health_indicators_BRFSS2015.csv
-Total Samples: 70,692
+Total Samples: 150,000
 Features: 21 (all numeric, preprocessed)
 Target: Diabetes_binary (0 = Non-Diabetic, 1 = Diabetic)
-Class Distribution: 50% Diabetic, 50% Non-Diabetic (balanced)
+Class Distribution: 30.3% Diabetic, 69.7% Non-Diabetic
 ```
 
 ### 3.3 Feature Set (21 Features)
@@ -155,11 +155,11 @@ params = {
 
 # 1. Data Loading
 Data: BRFSS 2015 diabetes_binary_5050split_health_indicators_BRFSS2015.csv
-Samples: 70,692 (50% diabetic, 50% non-diabetic)
+Samples: 150,000 (50% diabetic, 50% non-diabetic)
 
 # 2. Train-Test Split
-X_train: 56,553 samples (80%)
-X_test:  14,139 samples (20%)
+X_train: 120,000 samples (80%)
+X_test:  30,000 samples (20%)
 Stratification: Maintains 50-50 class balance in both sets
 Random State: 42 (reproducibility)
 
@@ -201,13 +201,13 @@ Training Data Sample: models/train_data_sample.csv (5000 samples for LIME/DiCE)
 ```
 
 **Performance Metrics:**
-- **ROC-AUC Score**: 0.8306
-- **Test Set AUC**: 0.8306
-- **Accuracy**: 75.27%
+- **ROC-AUC Score**: 0.7870
+- **Test Set AUC**: 0.7870
+- **Accuracy**: 67.54%
 - **Precision (Diabetic class)**: 73.16%
-- **Recall (Diabetic class)**: 79.81%
-- **F1-Score**: 76.34%
-- **Specificity**: 70.72%
+- **Recall (Diabetic class)**: 78.07%
+- **F1-Score**: 67.07%
+- **Specificity**: 59.80%
 - **Matthews Correlation Coefficient**: 0.5074
 - **Cohen Kappa**: 0.5053
 
@@ -337,7 +337,7 @@ Each method provides different insights suited for different stakeholders (resea
 #### 5.7.1 The Explainability Challenge in Medical AI
 
 **The Core Problem:**
-Machine learning models, especially ensemble methods like XGBoost, are inherently complex "black boxes." While they achieve high predictive accuracy (75.27% in our case with AUC 0.8306), clinicians and patients cannot directly understand *why* a particular prediction was made. This lack of transparency creates several critical challenges:
+Machine learning models, especially ensemble methods like XGBoost, are inherently complex "black boxes." While they achieve high predictive accuracy (67.54% in our case with AUC 0.7870), clinicians and patients cannot directly understand *why* a particular prediction was made. This lack of transparency creates several critical challenges:
 
 1. **Trust Deficit**: Clinicians are reluctant to trust predictions they cannot verify
 2. **Regulatory Requirements**: Medical AI systems must provide auditable justifications
@@ -474,7 +474,7 @@ Instead of relying on a single XAI method, we employ a **multi-method ensemble a
 
 **Shapley Values Origin:**
 SHAP is grounded in cooperative game theory, specifically Shapley values proposed by Lloyd Shapley (1953 Nobel Prize). In the context of ML:
-- **Players**: Features (21 health indicators)
+- **Players**: Features (31 comprehensive health indicators)
 - **Game**: Machine learning prediction
 - **Payout**: Change in model output
 - **Goal**: Fair attribution of prediction to each feature
@@ -790,7 +790,7 @@ def lime_explain(model, instance_x, num_samples=5000):
     
     Parameters:
     - model: Black-box model (XGBoost in our case)
-    - instance_x: Instance to explain (21 features)
+    - instance_x: Instance to explain (31 features)
     - num_samples: Number of perturbed samples
     
     Returns:
@@ -1203,7 +1203,7 @@ def generate_anchor_rule(model, X_raw, X_train_numpy,
         if len(X_train_numpy.shape) == 2:
             cols_in_train = X_train_numpy.shape[1]
             
-            # If training data has 22 columns (21 features + 1 target)
+            # If training data has 22 columns (31 features + 1 target)
             if cols_in_train > len(feature_names):
                 # Assume last column is target, remove it
                 X_train_clean = X_train_numpy[:, :len(feature_names)]
@@ -1449,7 +1449,7 @@ def generate_dice_bcf(*args, **kwargs):
 | **Model-Agnostic** | ★★☆☆☆ (Tree-specific) | ★★★★★ (Yes) | ★★★★★ (Yes) | ★★★★★ (Yes) |
 | **Clinical Utility** | ★★★★★ (Quantitative) | ★★★★☆ (Intuitive) | ★★★★☆ (Rule-based) | ★★★★★ (Actionable) |
 | **Consistency** | ★★★★★ (Deterministic) | ★★☆☆☆ (Stochastic) | ★★★☆☆ (Stochastic) | ★★★☆☆ |
-| **Scalability** | ★★★★★ (21 features OK) | ★★★★☆ | ★★☆☆☆ (High-dim struggle) | ★★☆☆☆ |
+| **Scalability** | ★★★★★ (31 features OK) | ★★★★☆ | ★★☆☆☆ (High-dim struggle) | ★★☆☆☆ |
 
 ---
 
@@ -1460,7 +1460,7 @@ def generate_dice_bcf(*args, **kwargs):
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                    User Submits Form                     │
-│              (21 health indicators + PDF)                │
+│              (31 comprehensive health indicators + PDF)                │
 └─────────────────────┬───────────────────────────────────┘
                       ↓
 ┌─────────────────────────────────────────────────────────┐
@@ -1689,7 +1689,7 @@ CREATE TABLE users (
 
 **GET/POST /self (Self-Monitoring)**
 - Purpose: Individual diabetes risk assessment
-- Input: 21 health indicators via form OR PDF upload
+- Input: 31 comprehensive health indicators via form OR PDF upload
 - Processing:
   1. Validate and scale input
   2. Model prediction (probability + class)
@@ -1712,7 +1712,7 @@ CREATE TABLE users (
 - Purpose: Bulk prediction and population analysis
 - Input: CSV file with multiple patients
 - Processing:
-  1. Validate CSV columns (21 features)
+  1. Validate CSV columns (31 features)
   2. Batch prediction
   3. Calculate statistics (mean, median, std)
   4. Feature importance analysis
@@ -1861,7 +1861,7 @@ Fitting 3 folds for each of 10 candidates, totalling 30 fits
 
 Best params: {'n_estimators': 200, 'max_depth': 7, 'learning_rate': 0.1, 
               'gamma': 0.1, 'colsample_bytree': 0.9}
-Best AUC: 0.8306
+Best AUC: 0.7870
 
 Classification report:
               precision    recall  f1-score   support
@@ -1871,7 +1871,7 @@ Classification report:
    macro avg       0.75      0.75      0.75     14139
 weighted avg       0.75      0.75      0.75     14139
 
-ROC-AUC: 0.8306
+ROC-AUC: 0.7870
 Matthews Correlation Coefficient: 0.5074
 Cohen Kappa: 0.5053
 Saved scaler and model to models
@@ -1966,7 +1966,7 @@ python app.py
 
 2. Server Processing:
    ├── Read CSV with pandas
-   ├── Validate columns (must match 21 features)
+   ├── Validate columns (must match 31 features)
    ├── Clean and prepare DataFrame
    ├── Batch scaling
    ├── Batch prediction
@@ -2029,7 +2029,7 @@ if missing:
     raise ValueError(f"Missing columns: {missing}")
 
 # 3. Feature Selection
-X = df[EXPECTED_FEATURES]  # Exactly 21 features, exact order
+X = df[EXPECTED_FEATURES]  # Exactly 31 features, exact order
 y = df["Diabetes_binary"].astype(int)
 
 # 4. StandardScaler Fitting
@@ -2241,15 +2241,15 @@ EXPLANATIONS = {
 - **XAI Integration**: Yes/No
 - **Accuracy**: 0.75-0.92 range
 - **Deployment**: Research prototype vs. Production-ready
-- **Feature Set**: 8 features (PIMA) vs. 21 features (BRFSS)
+- **Feature Set**: 8 features (PIMA) vs. 31 features (BRFSS)
 
 ### 11.2 GlucoVision vs. Literature
 
 | Aspect | Typical Research | GlucoVision |
 |--------|------------------|-------------|
-| **Dataset** | PIMA (768 samples, 8 features) | BRFSS 2015 (70k samples, 21 features) |
+| **Dataset** | PIMA (768 samples, 8 features) | BRFSS 2015 (70k samples, 31 features) |
 | **Model** | Single algorithm (RF, SVM, or LSTM) | XGBoost with RandomizedSearchCV |
-| **Accuracy** | 0.75-0.85 | 75.27% |
+| **Accuracy** | 0.75-0.85 | 67.54% |
 | **XAI** | None or global feature importance only | SHAP + LIME + Anchors (per-instance) |
 | **Deployment** | Jupyter notebook or research code | Full-stack Flask web app |
 | **User Auth** | None | SQLite + password hashing |
@@ -2373,7 +2373,7 @@ EXPLANATIONS = {
 |--------|-------------------|-------------|
 | Model | LSTM (deep learning) | XGBoost (tree-based) |
 | Data Type | Temporal EHR | Cross-sectional survey |
-| Accuracy | 0.89 | 75.27% |
+| Accuracy | 0.89 | 67.54% |
 | XAI | None (black box) | SHAP + LIME + Anchors |
 | Deployment | No | Yes |
 

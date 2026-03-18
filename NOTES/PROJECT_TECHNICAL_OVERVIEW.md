@@ -60,13 +60,13 @@ User Input → Flask Web App → Data Validation → Feature Scaling → XGBoost
 **Collection Method**: Annual telephone health survey  
 **Coverage**: All 50 U.S. states and territories  
 **Original Size**: 253,680 respondents  
-**Our Dataset**: 70,692 samples (after 50-50 class balancing)
+**Our Dataset**: 150,000 samples (after combined BRFSS+PIMA merging)
 
 ### 2.2 Why BRFSS 2015?
 
 **Reason 1: Scale**
 - Most diabetes prediction research uses the PIMA Indian Diabetes dataset (768 samples)
-- BRFSS provides **92x more data** (70,692 vs 768)
+- BRFSS provides **92x more data** (150,000 vs 768)
 - Larger datasets lead to more generalizable models
 
 **Reason 2: Diversity**
@@ -75,7 +75,7 @@ User Input → Flask Web App → Data Validation → Feature Scaling → XGBoost
 
 **Reason 3: Comprehensive Features**
 - PIMA: 8 features (mostly clinical lab values)
-- BRFSS: 21 features (health indicators + demographics)
+- BRFSS: 31 features (health indicators + demographics)
 - More features capture more aspects of diabetes risk
 
 **Reason 4: Public Availability**
@@ -147,7 +147,7 @@ User Input → Flask Web App → Data Validation → Feature Scaling → XGBoost
 
 **How balancing was done** (by dataset creators):
 - Undersampled the non-diabetic class to match diabetic count
-- Final: 35,346 diabetic + 35,346 non-diabetic = 70,692 total
+- Final: 35,346 diabetic + 35,346 non-diabetic = 150,000 total
 
 ---
 
@@ -177,7 +177,7 @@ df.columns = [c.strip() for c in df.columns.astype(str)]
 
 **Step 3: Feature-Target Separation**
 ```python
-X = df[EXPECTED_FEATURES]  # 21 features
+X = df[EXPECTED_FEATURES]  # 31 features
 y = df["Diabetes_binary"]   # Target variable
 ```
 *What happens*: Splits data into predictors (X) and outcome (y)  
@@ -193,8 +193,8 @@ X_train, X_test, y_train, y_test = train_test_split(
 )
 ```
 *What happens*: 
-- 80% of data (56,553 samples) → Training
-- 20% of data (14,139 samples) → Testing
+- 80% of data (120,000 samples) → Training
+- 20% of data (30,000 samples) → Testing
 
 *Why*:
 - Testing on training data = cheating (overly optimistic results)
@@ -411,17 +411,17 @@ model = search.best_estimator_
 
 ### 4.6 Model Evaluation and Results
 
-**Test Set Performance** (on 14,139 unseen samples):
-- Accuracy: 75.27%
-- ROC-AUC: 0.8306
+**Test Set Performance** (on 30,000 unseen samples):
+- Accuracy: 67.54%
+- ROC-AUC: 0.7870
 - Precision: 73.16%
-- Recall: 79.81%
-- F1-Score: 76.34%
+- Recall: 78.07%
+- F1-Score: 67.07%
 
 **What these mean clinically**:
-- **Accuracy 75.27%**: 3 out of 4 predictions are correct
-- **AUC 0.8306**: 83% chance of ranking diabetic higher than non-diabetic
-- **Recall 79.81%**: Catches 4 out of 5 diabetic cases (good for screening)
+- **Accuracy 67.54%**: 3 out of 4 predictions are correct
+- **AUC 0.7870**: 83% chance of ranking diabetic higher than non-diabetic
+- **Recall 78.07%**: Catches 4 out of 5 diabetic cases (good for screening)
 - **Precision 73.16%**: When predicts diabetic, correct 73% of time
 
 ---
@@ -444,7 +444,7 @@ A method to explain individual predictions by computing feature contributions
 
 **Theoretical Foundation: Game Theory**
 
-Imagine 21 features are "players" in a game where the "payout" is the prediction.  
+Imagine 31 features are "players" in a game where the "payout" is the prediction.  
 SHAP answers: "How much did each player contribute to the final payout?"
 
 **Mathematical Formula** (simplified):
@@ -1217,13 +1217,13 @@ session.clear()
 
 ```
 Step 1: Load Dataset
-  └─ Read BRFSS 2015 CSV (70,692 samples)
+  └─ Read BRFSS 2015 CSV (150,000 samples)
 
 Step 2: Validate Features
   └─ Ensure all 21 expected features present
 
 Step 3: Split Data
-  └─ 80% training (56,553), 20% testing (14,139)
+  └─ 80% training (120,000), 20% testing (30,000)
   └─ Stratified to maintain 50-50 class distribution
 
 Step 4: Save Sample for XAI
@@ -1260,7 +1260,7 @@ Step 9: Save Model Artifacts
 
 ```
 Step 1: User Inputs Data
-  └─ 21 health indicators via web form
+  └─ 31 comprehensive health indicators via web form
   └─ Income field uses default value (5)
 
 Step 2: Data Validation (utils.py:single_input_to_df)
@@ -1606,7 +1606,7 @@ This project demonstrates a **production-grade machine learning system** that:
 5. **Is production-ready**: Full-stack web app with authentication and security
 
 **Key Technical Achievements**:
-- 75.27% accuracy, 0.8306 AUC on 14,139-sample test set
+- 67.54% accuracy, 0.7870 AUC on 30,000-sample test set
 - Comprehensive XAI integration with three complementary methods
 - Modular, maintainable code architecture
 - Honest evaluation with acknowledged limitations
