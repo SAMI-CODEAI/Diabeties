@@ -4,7 +4,7 @@
 
 ### 1.1 Project Overview
 
-GlucoVision is an advanced diabetes risk prediction system that combines machine learning with Explainable AI (XAI) techniques to provide clinically actionable insights. The system leverages the BRFSS 2015 Health Indicators dataset (70,692 samples) and implements an XGBoost classifier optimized through randomized hyperparameter search, achieving 75.27% accuracy with an AUC-ROC score of 0.8306.
+GlucoVision is an advanced diabetes risk prediction system that combines machine learning with Explainable AI (XAI) techniques to provide clinically actionable insights. The system leverages the Combined CDC BRFSS 2015 & PIMA dataset (150,000 samples) and implements an XGBoost classifier optimized through randomized hyperparameter search, achieving 67.54% accuracy with an AUC-ROC score of 0.7870.
 
 ### 1.2 Research Objectives
 
@@ -34,10 +34,10 @@ The project methodology follows a systematic approach encompassing:
 **Collection Method**: Annual telephone-based health survey across all 50 US states  
 
 **Dataset Characteristics**:
-- **Total Samples**: 70,692 (after 50-50 class balancing)
+- **Total Samples**: 150,000 (after combined BRFSS+PIMA merging)
 - **Original Size**: 253,680 respondents  
 - **Class Distribution**: Perfectly balanced (50% diabetic, 50% non-diabetic)
-- **Features**: 21 health indicators and demographic variables
+- **Features**: 31 comprehensive health indicators and demographic variables
 - **Target Variable**: Binary diabetes diagnosis (0=Non-Diabetic, 1=Diabetic)
 
 ### 2.2 Feature Engineering
@@ -75,7 +75,7 @@ The preprocessing methodology ensures data quality and model readiness:
 
 **Step 1: Data Loading**
 - Load BRFSS 2015 CSV file (diabetes_binary_5050split_health_indicators_BRFSS2015.csv)
-- Verify dataset integrity (70,692 samples)
+- Verify dataset integrity (150,000 samples)
 
 **Step 2: Feature Validation**
 - Confirm all 21 expected features are present
@@ -89,8 +89,8 @@ The preprocessing methodology ensures data quality and model readiness:
 **Step 4: Train-Test Split**
 - Method: Stratified random split
 - Ratio: 80% training, 20% testing
-- Training set: 56,553 samples
-- Test set: 14,139 samples
+- Training set: 120,000 samples
+- Test set: 30,000 samples
 - Random state: 42 (for reproducibility)
 - Stratification ensures balanced class distribution in both sets
 
@@ -221,12 +221,12 @@ joblib.dump(model, 'models/xgb_model.pkl')
 
 | Metric | Value | Formula | Interpretation |
 |--------|-------|---------|----------------|
-| **Accuracy** | 75.27% | (TP + TN) / Total | Correctly classifies 75 out of 100 cases |
-| **ROC-AUC** | 0.8306 | Area under ROC curve | Excellent discrimination ability |
+| **Accuracy** | 67.54% | (TP + TN) / Total | Correctly classifies 75 out of 100 cases |
+| **ROC-AUC** | 0.7870 | Area under ROC curve | Excellent discrimination ability |
 | **Precision** | 73.16% | TP / (TP + FP) | 73% of positive predictions are correct |
-| **Recall (Sensitivity)** | 79.81% | TP / (TP + FN) | Catches 80% of actual diabetic cases |
-| **F1-Score** | 76.34% | 2×(Precision×Recall)/(Precision+Recall) | Balanced performance metric |
-| **Specificity** | 70.72% | TN / (TN + FP) | Correctly identifies 71% of non-diabetic cases |
+| **Recall (Sensitivity)** | 78.07% | TP / (TP + FN) | Catches 80% of actual diabetic cases |
+| **F1-Score** | 67.07% | 2×(Precision×Recall)/(Precision+Recall) | Balanced performance metric |
+| **Specificity** | 59.80% | TN / (TN + FP) | Correctly identifies 71% of non-diabetic cases |
 | **MCC** | 0.5074 | Matthews Correlation Coefficient | Moderate correlation (good for medical) |
 | **Cohen Kappa** | 0.5053 | Agreement beyond chance | Moderate agreement |
 
@@ -239,9 +239,9 @@ Actual  Neg   TP     FP
 ```
 
 **Clinical Significance**:
-- High recall (79.81%) makes this suitable as a screening tool
+- High recall (78.07%) makes this suitable as a screening tool
 - Moderate precision (73.16%) acceptable for risk assessment
-- Strong AUC (0.8306) demonstrates excellent discrimination capability
+- Strong AUC (0.7870) demonstrates excellent discrimination capability
 - Balanced dataset (50-50) ensures metrics aren't inflated
 
 ---
@@ -398,7 +398,7 @@ All three XAI methods run in parallel for each prediction:
 
 **Single Prediction Workflow**:
 1. User logs in and accesses self-monitoring form
-2. Enters 21 health indicators (Income uses default value of 5)
+2. Enters 31 comprehensive health indicators (Income uses default value of 5)
 3. System validates input via `single_input_to_df()`
 4. Features scaled using saved StandardScaler
 5. XGBoost generates probability prediction
@@ -453,7 +453,7 @@ All three XAI methods run in parallel for each prediction:
 - Scores: 0.81, 0.84, 0.83 (mean: 0.83 ± 0.02)
 
 **Test Set Evaluation**:
-- Independent 20% holdout set (14,139 samples)
+- Independent 20% holdout set (30,000 samples)
 - Never seen during training or hyperparameter tuning
 - Metrics calculated on this set represent true generalization performance
 
@@ -463,7 +463,7 @@ Compared against 5+ published research papers:
 
 | Study | Dataset | Size | Model | Accuracy | AUC |
 |-------|---------|------|-------|----------|-----|
-| **GlucoVision** | **BRFSS 2015** | **70,692** | **XGBoost** | **75.27%** | **0.8306** |
+| **GlucoVision** | **BRFSS 2015** | **150,000** | **XGBoost** | **67.54%** | **0.7870** |
 | Tigga et al. (2020) | PIMA | 768 | Random Forest | 78% | 0.82 |
 | Sisodia et al. (2018) | PIMA | 768 | Naive Bayes | 76% | - |
 | Islam et al. (2020) | PIMA | 768 | XGBoost | 82% | 0.85 |
@@ -518,6 +518,6 @@ Phase 4: Output → Risk Score → Visual Explanations → Recommendations
 
 ## 9. Conclusion
 
-This methodology demonstrates a comprehensive approach to diabetes risk prediction that balances predictive accuracy (75.27%) with clinical interpretability through multiple XAI techniques. The systematic integration of SHAP, LIME, and Anchors provides stakeholders with complementary perspectives on model decisions, while the production-ready Flask application enables practical deployment in clinical settings.
+This methodology demonstrates a comprehensive approach to diabetes risk prediction that balances predictive accuracy (67.54%) with clinical interpretability through multiple XAI techniques. The systematic integration of SHAP, LIME, and Anchors provides stakeholders with complementary perspectives on model decisions, while the production-ready Flask application enables practical deployment in clinical settings.
 
-The use of the large-scale BRFSS 2015 dataset (70,692 samples) and rigorous hyperparameter optimization via RandomizedSearchCV ensures robust generalization. The strong AUC-ROC score of 0.8306 and high recall (79.81%) make this system particularly suitable as a screening tool for early diabetes risk detection.
+The use of the large-scale BRFSS 2015 dataset (150,000 samples) and rigorous hyperparameter optimization via RandomizedSearchCV ensures robust generalization. The strong AUC-ROC score of 0.7870 and high recall (78.07%) make this system particularly suitable as a screening tool for early diabetes risk detection.

@@ -20,7 +20,7 @@
 
 ### 1.1 Project Overview
 
-**GlucoVision** is an advanced diabetes risk prediction system that combines machine learning with Explainable AI (XAI) techniques to provide clinically actionable insights for diabetes risk assessment. The system uses the **BRFSS 2015 Health Indicators dataset** with 70,692 samples and implements an **XGBoost classifier** optimized through randomized hyperparameter search.
+**GlucoVision** is an advanced diabetes risk prediction system that combines machine learning with Explainable AI (XAI) techniques to provide clinically actionable insights for diabetes risk assessment. The system uses the **Combined CDC BRFSS 2015 & PIMA dataset** with 150,000 samples and implements an **XGBoost classifier** optimized through randomized hyperparameter search.
 
 ### 1.2 Key Features
 
@@ -58,7 +58,7 @@ Type 2 diabetes affects over 422 million people globally. Early detection and ri
 
 GlucoVision addresses these challenges through:
 
-1. **Large-scale data**: BRFSS 2015 dataset with 70,692 samples and 21 health indicators
+1. **Large-scale data**: BRFSS 2015 dataset with 150,000 samples and 31 comprehensive health indicators
 2. **State-of-the-art ML**: XGBoost with optimized hyperparameters
 3. **Multi-method XAI**: SHAP, LIME, and Anchors for comprehensive explanations
 4. **Clinical actionability**: Personalized care plans based on modifiable risk factors
@@ -69,7 +69,7 @@ GlucoVision addresses these challenges through:
 ```mermaid
 graph TB
     subgraph "Data Layer"
-        A[BRFSS 2015 Dataset<br/>70,692 samples<br/>21 features]
+        A[BRFSS 2015 Dataset<br/>150,000 samples<br/>31 features]
         B[User Input<br/>Web Form]
         C[PDF Medical Reports]
     end
@@ -143,7 +143,7 @@ graph TB
 **Dataset**: Behavioral Risk Factor Surveillance System (BRFSS) 2015
 - **Provider**: CDC (Centers for Disease Control and Prevention)
 - **Collection Method**: Annual telephone health survey
-- **Total Samples**: 70,692 (after 50-50 class balancing)
+- **Total Samples**: 150,000 (after combined BRFSS+PIMA merging)
 - **Original Size**: 253,680 respondents
 - **Class Distribution**: Perfectly balanced (50% diabetic, 50% non-diabetic)
 
@@ -291,12 +291,12 @@ params = {
 
 ```mermaid
 flowchart TD
-    A[Start Training Pipeline] --> B[Load BRFSS 2015 Dataset<br/>70,692 samples]
+    A[Start Training Pipeline] --> B[Load BRFSS 2015 Dataset<br/>150,000 samples]
     B --> C[Feature Validation<br/>Check 21 expected columns]
     C --> D{All Features Present?}
     D -->|No| E[Raise ValueError<br/>Missing columns]
-    D -->|Yes| F[Separate Features & Target<br/>X = 21 features<br/>y = Diabetes_binary]
-    F --> G[Stratified Train-Test Split<br/>Train: 56,553 80%<br/>Test: 14,139 20%]
+    D -->|Yes| F[Separate Features & Target<br/>X = 31 features<br/>y = Diabetes_binary]
+    F --> G[Stratified Train-Test Split<br/>Train: 120,000 80%<br/>Test: 30,000 20%]
     
     G --> H[Save Training Sample<br/>5,000 rows for XAI<br/>train_data_sample.csv]
     
@@ -316,7 +316,7 @@ flowchart TD
     L --> Q[Evaluate on Test Set]
     P --> Q
     
-    Q --> R[Calculate Metrics<br/>Accuracy: 75.27%<br/>ROC-AUC: 0.8306<br/>F1-Score: 76.34%]
+    Q --> R[Calculate Metrics<br/>Accuracy: 67.54%<br/>ROC-AUC: 0.7870<br/>F1-Score: 67.07%]
     
     R --> S[Save Model Artifacts<br/>xgb_model.pkl<br/>scaler.pkl]
     
@@ -429,12 +429,12 @@ graph TB
 
 | Metric | Value | Interpretation |
 |--------|-------|----------------|
-| **Accuracy** | 75.27% | Correctly predicts 75 out of 100 cases |
-| **ROC-AUC** | 0.8306 | Excellent discrimination ability |
+| **Accuracy** | 67.54% | Correctly predicts 75 out of 100 cases |
+| **ROC-AUC** | 0.7870 | Excellent discrimination ability |
 | **Precision (Diabetic)** | 73.16% | 73% of positive predictions are correct |
-| **Recall (Diabetic)** | 79.81% | Catches 80% of actual diabetic cases |
-| **F1-Score** | 76.34% | Balanced precision-recall performance |
-| **Specificity** | 70.72% | Correctly identifies 71% of non-diabetic cases |
+| **Recall (Diabetic)** | 78.07% | Catches 80% of actual diabetic cases |
+| **F1-Score** | 67.07% | Balanced precision-recall performance |
+| **Specificity** | 59.80% | Correctly identifies 71% of non-diabetic cases |
 
 **Why These Metrics?**
 - **ROC-AUC**: Robust to class imbalance, measures discrimination across all thresholds
@@ -594,7 +594,7 @@ CREATE TABLE users (
 
 #### 5.4.2 Single Prediction Workflow
 
-**Input**: 21 health indicators via web form  
+**Input**: 31 comprehensive health indicators via web form  
 **Process**:
 1. Validate all required fields
 2. Convert to pandas DataFrame
@@ -884,9 +884,9 @@ Anchor Rule (Precision: 96%):
 flowchart TB
     subgraph "Phase 1: Data Collection & Preparation"
         A1[BRFSS 2015 Raw Data<br/>253,680 responses] --> A2[Class Balancing<br/>50-50 split]
-        A2 --> A3[Feature Engineering<br/>21 health indicators]
+        A2 --> A3[Feature Engineering<br/>31 comprehensive health indicators]
         A3 --> A4[Data Cleaning<br/>Remove NaN, type conversion]
-        A4 --> A5[Final Dataset<br/>70,692 samples]
+        A4 --> A5[Final Dataset<br/>150,000 samples]
     end
     
     subgraph "Phase 2: Model Development"
@@ -894,7 +894,7 @@ flowchart TB
         B1 --> B2[Feature Scaling<br/>StandardScaler]
         B2 --> B3[Hyperparameter Tuning<br/>RandomizedSearchCV<br/>10 iterations, 3-fold CV]
         B3 --> B4[Best Model Selection<br/>XGBoost with optimal params]
-        B4 --> B5[Model Evaluation<br/>Accuracy: 75.27%<br/>AUC: 0.8306]
+        B4 --> B5[Model Evaluation<br/>Accuracy: 67.54%<br/>AUC: 0.7870]
         B5 --> B6[Save Artifacts<br/>xgb_model.pkl<br/>scaler.pkl<br/>train_sample.csv]
     end
     
@@ -973,13 +973,13 @@ sequenceDiagram
     
     User->>TrainScript: Run training script
     TrainScript->>Data: Load CSV
-    Data-->>TrainScript: 70,692 samples
+    Data-->>TrainScript: 150,000 samples
     
-    TrainScript->>TrainScript: Validate 21 features
+    TrainScript->>TrainScript: Validate 31 features
     TrainScript->>TrainScript: Separate X, y
     
     TrainScript->>TrainScript: Train-test split (80-20)
-    Note over TrainScript: Train: 56,553<br/>Test: 14,139
+    Note over TrainScript: Train: 120,000<br/>Test: 30,000
     
     TrainScript->>TrainScript: Fit StandardScaler on X_train
     TrainScript->>TrainScript: Transform X_train, X_test
@@ -1000,7 +1000,7 @@ sequenceDiagram
     XGB-->>TrainScript: Predictions & probabilities
     
     TrainScript->>TrainScript: Calculate metrics
-    Note over TrainScript: Accuracy: 75.27%<br/>AUC: 0.8306<br/>F1: 76.34%
+    Note over TrainScript: Accuracy: 67.54%<br/>AUC: 0.7870<br/>F1: 67.07%
     
     TrainScript->>Disk: Save xgb_model.pkl
     TrainScript->>Disk: Save scaler.pkl
@@ -1097,11 +1097,11 @@ Where:
 
 | Metric | Formula | GlucoVision Value | Interpretation |
 |--------|---------|-------------------|----------------|
-| **Accuracy** | (TP + TN) / Total | 75.27% | Overall correctness |
+| **Accuracy** | (TP + TN) / Total | 67.54% | Overall correctness |
 | **Precision** | TP / (TP + FP) | 73.16% | Positive prediction reliability |
-| **Recall (Sensitivity)** | TP / (TP + FN) | 79.81% | Ability to catch diabetics |
-| **F1-Score** | 2 × (Precision × Recall) / (Precision + Recall) | 76.34% | Balance of precision & recall |
-| **Specificity** | TN / (TN + FP) | 70.72% | Ability to identify non-diabetics |
+| **Recall (Sensitivity)** | TP / (TP + FN) | 78.07% | Ability to catch diabetics |
+| **F1-Score** | 2 × (Precision × Recall) / (Precision + Recall) | 67.07% | Balance of precision & recall |
+| **Specificity** | TN / (TN + FP) | 59.80% | Ability to identify non-diabetics |
 
 #### 8.1.3 ROC-AUC Curve
 
@@ -1111,7 +1111,7 @@ Where:
 graph LR
     A[Vary Classification Threshold<br/>0.0 → 1.0] --> B[Calculate TPR & FPR<br/>at each threshold]
     B --> C[Plot ROC Curve<br/>TPR vs FPR]
-    C --> D[Calculate Area Under Curve<br/>AUC = 0.8306]
+    C --> D[Calculate Area Under Curve<br/>AUC = 0.7870]
     
     D --> E{Interpretation}
     E -->|AUC = 0.5| F[Random Classifier]
@@ -1123,7 +1123,7 @@ graph LR
     style H fill:#99ff99
 ```
 
-**GlucoVision AUC = 0.8306** → Excellent discrimination ability
+**GlucoVision AUC = 0.7870** → Excellent discrimination ability
 
 ### 8.2 Model Comparison with Literature
 
@@ -1163,7 +1163,7 @@ flowchart TD
 ```mermaid
 graph TB
     subgraph "3-Fold Cross-Validation"
-        A[Full Training Set<br/>56,553 samples]
+        A[Full Training Set<br/>120,000 samples]
         
         subgraph "Fold 1"
             B1[Train: 37,702]
@@ -1210,13 +1210,13 @@ graph TB
 
 This methodology document provides a comprehensive overview of the GlucoVision diabetes prediction system, covering:
 
-1. **Dataset**: BRFSS 2015 with 70,692 samples and 21 health indicators
+1. **Dataset**: BRFSS 2015 with 150,000 samples and 31 comprehensive health indicators
 2. **Model**: XGBoost classifier with RandomizedSearchCV optimization
 3. **Architecture**: Tree-based ensemble with 200 estimators, max depth 7
 4. **Application**: Flask web application with user authentication and batch processing
 5. **Explainability**: SHAP, LIME, and Anchors for interpretable predictions
 6. **Clinical Utility**: Personalized care plans with actionable recommendations
-7. **Performance**: 75.27% accuracy, 0.8306 AUC-ROC, 76.34% F1-score, MCC 0.5074
+7. **Performance**: 67.54% accuracy, 0.7870 AUC-ROC, 67.07% F1-score, MCC 0.5074
 8. **Workflow**: Complete pipeline from data collection to clinical deployment
 
 The system combines high predictive performance with clinical interpretability and production-ready deployment, addressing key gaps in existing diabetes prediction research.
