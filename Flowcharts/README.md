@@ -26,3 +26,7 @@ For best results in reports:
 - Use landscape orientation for wider diagrams
 - Export as PNG/SVG with 300 DPI minimum
 - Maintain color scheme for consistency
+
+
+
+
