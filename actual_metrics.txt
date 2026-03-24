@@ -1,0 +1,14 @@
+Model: XGBoost Combined (models/xgb_model_combined.pkl)
+Accuracy: 0.9442
+Precision: 0.8859
+Recall: 0.9413
+F1: 0.9127
+
+Model: Gradient Boosting (models/best_model_gradient_boosting.pkl)
+Accuracy: 0.6900
+Precision: 0.0000
+Recall: 0.0000
+F1: 0.0000
+
+Error for models/xgb_model.pkl: Feature shape mismatch, expected: 21, got 29
+
