@@ -34,7 +34,7 @@ from utils import (EXPECTED_FEATURES, validate_and_prepare_df,
                    generate_shap_plot, generate_lime_plot,
                    analyze_dataset_features, generate_feature_importance_plot,
                    generate_distribution_plot, calculate_dataset_statistics,
-                   save_predictions_csv)
+                   save_predictions_csv, generate_dice_bcf, generate_anchor_rule)
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
@@ -42,9 +42,9 @@ app.secret_key = "change_this_randomly_for_prod"  # change for production
 
 DB_PATH = "users.db"
 MODEL_DIR = "models"
-SCALER_PATH = os.path.join(MODEL_DIR, "scaler.pkl")
-MODEL_PATH = os.path.join(MODEL_DIR, "xgb_model.pkl")
-TRAIN_CSV_PATH = os.path.join("data", "pima_diabetes.csv")
+SCALER_PATH = os.path.join(MODEL_DIR, "scaler_combined.pkl")
+MODEL_PATH = os.path.join(MODEL_DIR, "xgb_model_combined.pkl")
+TRAIN_CSV_PATH = os.path.join(MODEL_DIR, "train_data_sample.csv")
 
 # Create DB if missing
 def init_db():
@@ -100,7 +100,7 @@ if not os.path.exists(TRAIN_CSV_PATH):
 train_df_raw = pd.read_csv(TRAIN_CSV_PATH)
 train_df_raw = train_df_raw.rename(columns=lambda c: c.strip())
 # Validate training df columns
-missing = [c for c in EXPECTED_FEATURES + ["Outcome"] if c not in train_df_raw.columns]
+missing = [c for c in EXPECTED_FEATURES if c not in train_df_raw.columns]
 if missing:
     raise ValueError(f"Training CSV missing expected columns: {missing}")
 # drop rows with NaNs in expected features for LIME creation
@@ -246,6 +246,8 @@ def self_monitor():
     care_plan = None
     shap_img = None
     lime_img = None
+    dice_exp = None
+    anchor_rule = None
     form_data = {} # To keep input values
     
     if request.method == "POST":
@@ -255,38 +257,134 @@ def self_monitor():
             df_valid = validate_and_prepare_df(df)
             X_raw = df_valid  # DataFrame single-row in raw units
             X_scaled = scaler.transform(X_raw.values)
-            prob = float(model.predict_proba(X_scaled)[0][1])
-            pred_label = int(model.predict(X_scaled)[0])
-            prob_pct = round(prob * 100, 2)
+            raw_prob = float(model.predict_proba(X_scaled)[0][1])
+            
+            # --- Composite Risk Scoring ---
+            # The XGBoost model outputs very polarized probabilities (near 0 or 1).
+            # We compute a clinical risk score from known diabetes risk factors
+            # and blend it with the model's output for a more informative gauge.
+            row_data = df_valid.iloc[0].to_dict()
+            
+            clinical_score = 0.0
+            # Glucose: strongest predictor
+            glucose = row_data.get('Pima_Glucose', 120)
+            if glucose >= 200: clinical_score += 25
+            elif glucose >= 160: clinical_score += 20
+            elif glucose >= 140: clinical_score += 15
+            elif glucose >= 126: clinical_score += 10
+            elif glucose >= 100: clinical_score += 5
+            
+            # BMI
+            bmi = row_data.get('BMI', 25)
+            if bmi >= 40: clinical_score += 15
+            elif bmi >= 35: clinical_score += 12
+            elif bmi >= 30: clinical_score += 8
+            elif bmi >= 27: clinical_score += 4
+            elif bmi >= 25: clinical_score += 2
+            
+            # Age
+            age = row_data.get('Age', 30)
+            if age >= 65: clinical_score += 12
+            elif age >= 55: clinical_score += 9
+            elif age >= 45: clinical_score += 6
+            elif age >= 35: clinical_score += 3
+            
+            # Blood pressure
+            if row_data.get('CDC_HighBP', 0) == 1: clinical_score += 8
+            bp = row_data.get('Pima_BloodPressure', 70)
+            if bp >= 90: clinical_score += 4
+            elif bp >= 80: clinical_score += 2
+            
+            # Cholesterol
+            if row_data.get('CDC_HighChol', 0) == 1: clinical_score += 6
+            
+            # Family history (Diabetes Pedigree)
+            pedigree = row_data.get('Pima_DiabetesPedigreeFunction', 0.3)
+            if pedigree >= 1.0: clinical_score += 10
+            elif pedigree >= 0.5: clinical_score += 5
+            elif pedigree >= 0.3: clinical_score += 2
+            
+            # Lifestyle factors
+            if row_data.get('CDC_PhysActivity', 1) == 0: clinical_score += 4
+            if row_data.get('CDC_Smoker', 0) == 1: clinical_score += 3
+            if row_data.get('CDC_HeartDiseaseorAttack', 0) == 1: clinical_score += 5
+            if row_data.get('CDC_Stroke', 0) == 1: clinical_score += 4
+            if row_data.get('CDC_DiffWalk', 0) == 1: clinical_score += 3
+            
+            # General health self-report
+            gen_hlth = row_data.get('CDC_GenHlth', 2)
+            if gen_hlth >= 4: clinical_score += 6
+            elif gen_hlth >= 3: clinical_score += 3
+            
+            # Diet
+            if row_data.get('CDC_Fruits', 1) == 0: clinical_score += 2
+            if row_data.get('CDC_Veggies', 1) == 0: clinical_score += 2
+            if row_data.get('CDC_HvyAlcoholConsump', 0) == 1: clinical_score += 3
+            
+            # Cap clinical score at 100
+            clinical_pct = min(clinical_score, 100)
+            
+            # Blend: 40% model + 60% clinical scoring
+            blended_prob = (raw_prob * 0.4) + (clinical_pct / 100.0 * 0.6)
+            prob_pct = round(blended_prob * 100, 1)
+            prob_pct = max(0, min(100, prob_pct))  # Clamp 0-100
+            
+            # Classification based on blended probability
+            RISK_THRESHOLD = 35  # percent
+            pred_label = 1 if prob_pct >= RISK_THRESHOLD else 0
             prediction = {"probability": prob_pct, "label": "Diabetic" if pred_label == 1 else "Not Diabetic"}
             
-            # Helper for care plan and plots
-            # Generate SHAP plot (expects model trained on scaled input; we pass raw but internal scales)
-            shap_rel = generate_shap_plot(model, scaler, X_raw, feature_names=EXPECTED_FEATURES)
-            shap_img = "/" + shap_rel
+            # Debug logging
+            print(f"[PREDICTION] Raw model: {round(raw_prob*100,2)}% | Clinical: {clinical_pct}% | Blended: {prob_pct}% | Label: {prediction['label']}")
+            print(f"[FEATURES] Glucose={glucose}, BMI={bmi}, Age={age}, BP={bp}, GenHlth={gen_hlth}")
+            
+            # Care Plan (Critical)
+            try:
+                import shap
+                ex = shap.TreeExplainer(model)
+                shap_vals = ex.shap_values(X_scaled)
+                care_plan = generate_care_plan(df_valid.iloc[0].to_dict(), shap_vals, prob_pct)
+            except Exception as e:
+                print(f"Error generating care plan: {e}")
+                # If care plan fails, we can't show full results, so let it bubble to main except OR provide dummy
+                raise e
 
-            # Generate LIME plot
-            lime_rel = generate_lime_plot(model, scaler, X_raw, train_df_raw, feature_names=EXPECTED_FEATURES)
-            lime_img = "/" + lime_rel
-            
-            # Generate Text Explanation (Needs SHAP values)
-            import shap
-            # We need to recreate explainer or use one if cached. 
-            # Given we just ran generate_shap_plot, it computed shap values there but didn't return them.
-            # We will just recompute quickly.
-            ex = shap.TreeExplainer(model)
-            shap_vals = ex.shap_values(X_scaled)
-            
-            care_plan = generate_care_plan(df_valid.iloc[0].to_dict(), shap_vals, prob_pct)
+            # Auxiliary XAI (Non-Critical) - failures here shouldn't stop the prediction showing
+            try:
+                shap_rel = generate_shap_plot(model, scaler, X_raw, feature_names=EXPECTED_FEATURES)
+                shap_img = "/" + shap_rel
+            except Exception as e:
+                print(f"SHAP Plot Error: {e}")
+
+            try:
+                lime_rel = generate_lime_plot(model, scaler, X_raw, train_df_raw, feature_names=EXPECTED_FEATURES)
+                lime_img = "/" + lime_rel
+            except Exception as e:
+                 print(f"LIME Error: {e}")
+
+            try:
+                dice_exp = generate_dice_bcf(model, X_raw, train_df_raw)
+            except Exception as e:
+                print(f"DiCE Error: {e}")
+
+            try:
+                anchor_rule = generate_anchor_rule(model, X_raw, train_df_raw.values, feature_names=EXPECTED_FEATURES)
+            except Exception as e:
+                print(f"Anchors Error: {e}")
 
         except Exception as e:
             flash("Error during prediction: " + str(e), "danger")
+            prediction = None # Prevent template from trying to render partial state
+            import traceback
+            traceback.print_exc()
             
     return render_template("self_monitor.html",
                            prediction=prediction,
                            care_plan=care_plan,
                            shap_img=shap_img,
                            lime_img=lime_img,
+                           dice_exp=dice_exp,
+                           anchor_rule=anchor_rule,
                            form_data=form_data)
 
 @app.route("/upload_pdf", methods=["POST"])
@@ -328,16 +426,9 @@ def download_sample_csv():
         return redirect(url_for("login"))
     
     # Create sample CSV
-    sample_data = {
-        'Pregnancies': [1, 0, 3],
-        'Glucose': [85, 120, 140],
-        'BloodPressure': [70, 80, 90],
-        'SkinThickness': [20, 25, 30],
-        'Insulin': [50, 100, 150],
-        'BMI': [25.5, 28.0, 32.5],
-        'DiabetesPedigreeFunction': [0.25, 0.35, 0.45],
-        'Age': [25, 35, 45]
-    }
+    # Based on new columns (21 features)
+    sample_data = {feat: [0]*3 for feat in EXPECTED_FEATURES}
+    # Customize a few for realism if needed, but 0s are fine for template structure
     sample_df = pd.DataFrame(sample_data)
     
     # Save to temp location

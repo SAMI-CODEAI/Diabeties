@@ -6,26 +6,43 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import shap
-from lime.lime_tabular import LimeTabularExplainer
+
+# Optional XAI libraries
+try:
+    import dice_ml
+except ImportError:
+    dice_ml = None
+
+try:
+    from alibi.explainers import AnchorTabular
+except ImportError:
+    AnchorTabular = None
+
+try:
+    from lime.lime_tabular import LimeTabularExplainer
+except ImportError:
+    LimeTabularExplainer = None
 
 EXPECTED_FEATURES = [
-    "Pregnancies","Glucose","BloodPressure","SkinThickness",
-    "Insulin","BMI","DiabetesPedigreeFunction","Age"
+    "Pima_Pregnancies", "Pima_Glucose", "Pima_BloodPressure", 
+    "Pima_SkinThickness", "Pima_Insulin", "Pima_DiabetesPedigreeFunction",
+    "BMI", "Age", 
+    "CDC_BMI", "CDC_Age_Category",
+    "CDC_HighBP", "CDC_HighChol", "CDC_CholCheck", "CDC_Smoker",
+    "CDC_Stroke", "CDC_HeartDiseaseorAttack", "CDC_PhysActivity", 
+    "CDC_Fruits", "CDC_Veggies", "CDC_HvyAlcoholConsump", 
+    "CDC_AnyHealthcare", "CDC_NoDocbcCost", "CDC_GenHlth",
+    "CDC_MentHlth", "CDC_PhysHlth", "CDC_DiffWalk", 
+    "CDC_Sex", "CDC_Education", "CDC_Income"
 ]
-
-# PIMA Dataset Medians for Imputation
-MEDIANS = {
-    "SkinThickness": 23.00,
-    "Insulin": 30.50,
-    "DiabetesPedigreeFunction": 0.3725,
-    "Pregnancies": 0 # Default to 0 if not provided (e.g. Male)
-}
 
 # directories for saving explanation images
 SHAP_DIR = os.path.join("static", "shap_images")
 LIME_DIR = os.path.join("static", "lime_images")
+DICE_DIR = os.path.join("static", "dice_images") # For html output if needed
 os.makedirs(SHAP_DIR, exist_ok=True)
 os.makedirs(LIME_DIR, exist_ok=True)
+os.makedirs(DICE_DIR, exist_ok=True)
 
 def normalize_columns(df: pd.DataFrame):
     df = df.copy()
@@ -47,58 +64,76 @@ def validate_and_prepare_df(df: pd.DataFrame):
 def single_input_to_df(form_dict):
     row = {}
     
-    # helper to safely get float
-    def get_val(key):
+    # helper to safely get int/float
+    def get_val(key, default=0):
         v = form_dict.get(key)
         if v is None or str(v).strip() == "":
-            return None
+            return default
         try:
             return float(v)
         except:
-            return None
+            return default
 
-    # 1. Handle Basic Inputs
-    row["Age"] = get_val("Age")
-    row["Glucose"] = get_val("Glucose")
-    row["BloodPressure"] = get_val("BloodPressure")
-    row["Pregnancies"] = get_val("Pregnancies") # Might be None
+    # 1. Map Clinical Features (Pima)
+    # Defaults are TRAINING DATA MEDIANS for accurate "average patient" predictions
+    row["Pima_Pregnancies"] = get_val("Pregnancies", 5)
+    row["Pima_Glucose"] = get_val("Glucose", 132)        # Training median=132
+    row["Pima_BloodPressure"] = get_val("BloodPressure", 74) # Training median=74
+    row["Pima_SkinThickness"] = get_val("SkinThickness", 12) # Training median=12
+    row["Pima_Insulin"] = get_val("Insulin", 0)           # Training median=0 (many zeros in Pima data)
+    row["Pima_DiabetesPedigreeFunction"] = get_val("DiabetesPedigreeFunction", 0.452) # Training median
 
-    # 2. Handle BMI or Height/Weight
-    bmi_val = get_val("BMI")
-    if bmi_val is not None:
-        row["BMI"] = bmi_val
-    else:
-        # Try Calc BMI
-        h_cm = get_val("Height")
-        w_kg = get_val("Weight")
-        if h_cm and w_kg:
-            # BMI = kg / m^2
-            h_m = h_cm / 100.0
-            row["BMI"] = round(w_kg / (h_m * h_m), 1)
-        else:
-            row["BMI"] = None # Will error or need default? Let's leave None to catch later if needed.
+    # 2. Map Common Features (Age/BMI)
+    # NOTE: The form sends Age as a BRFSS category (1-13), NOT raw age in years.
+    # 1=18-24, 2=25-29, 3=30-34, 4=35-39, 5=40-44, 6=45-49, 7=50-54,
+    # 8=55-59, 9=60-64, 10=65-69, 11=70-74, 12=75-79, 13=80+
+    age_category = int(get_val("Age", 3))  # Default category 3 (30-34)
+    bmi_raw = get_val("BMI", 25.0)
 
-    # 3. Handle Advanced/Technical Inputs (Impute if Missing)
-    for feat in ["SkinThickness", "Insulin", "DiabetesPedigreeFunction"]:
-        val = get_val(feat)
-        if val is not None:
-            row[feat] = val
-        else:
-            # IMPUTE MEDIAN
-            row[feat] = MEDIANS.get(feat, 0)
+    # Reverse-map category to approximate midpoint age for the raw "Age" feature
+    # These match the combine_datasets.py mapping used during training
+    AGE_CATEGORY_TO_MIDPOINT = {
+        1: 21.5, 2: 27.0, 3: 32.0, 4: 37.0, 5: 42.0, 6: 47.0, 7: 52.0,
+        8: 57.0, 9: 62.0, 10: 67.0, 11: 72.0, 12: 77.0, 13: 82.0
+    }
+    age_raw = AGE_CATEGORY_TO_MIDPOINT.get(age_category, 47.0)  # Default to median age category
 
-    # 4. Handle Pregnancies Default
-    if row["Pregnancies"] is None:
-        row["Pregnancies"] = 0 # Default
+    row["BMI"] = bmi_raw
+    row["Age"] = age_raw
+    
+    # CDC Duplicates
+    row["CDC_BMI"] = bmi_raw
+    
+    # Use the category directly from the form (already 1-13)
+    row["CDC_Age_Category"] = age_category
 
+    # 3. Map CDC Lifestyle Features
+    # Note: Form inputs match CDC suffixes usually e.g. "HighBP"
+    row["CDC_HighBP"] = get_val("HighBP", 0)
+    row["CDC_HighChol"] = get_val("HighChol", 0)
+    row["CDC_CholCheck"] = get_val("CholCheck", 1)
+    row["CDC_Smoker"] = get_val("Smoker", 0)
+    row["CDC_Stroke"] = get_val("Stroke", 0)
+    row["CDC_HeartDiseaseorAttack"] = get_val("HeartDiseaseorAttack", 0)
+    row["CDC_PhysActivity"] = get_val("PhysActivity", 1)
+    row["CDC_Fruits"] = get_val("Fruits", 1)
+    row["CDC_Veggies"] = get_val("Veggies", 1)
+    row["CDC_HvyAlcoholConsump"] = get_val("HvyAlcoholConsump", 0)
+    row["CDC_AnyHealthcare"] = get_val("AnyHealthcare", 1)
+    row["CDC_NoDocbcCost"] = get_val("NoDocbcCost", 0)
+    row["CDC_GenHlth"] = get_val("GenHlth", 2)  # Training median=2 (Very Good)
+    row["CDC_MentHlth"] = get_val("MentHlth", 0)
+    row["CDC_PhysHlth"] = get_val("PhysHlth", 0)
+    row["CDC_DiffWalk"] = get_val("DiffWalk", 0)
+    row["CDC_Sex"] = get_val("Sex", 0)
+    row["CDC_Education"] = get_val("Education", 5)  # Training median=5
+    row["CDC_Income"] = get_val("Income", 7)  # Training median=7
+    
     return pd.DataFrame([row])
 
 def generate_care_plan(row_dict, shap_values, proba_percent):
     """
-    Generate a natural language explanation and action plan.
-    row_dict: dict of feature values for this user
-    shap_values: array of shap values (impact) for features
-    proba_percent: risk score (0-100)
+    Generate a formatted Clinical Decision Support report with detailed explanations.
     """
     plan = {
         "summary": "",
@@ -106,172 +141,372 @@ def generate_care_plan(row_dict, shap_values, proba_percent):
         "actions": []
     }
     
-    # 1. High Level Summary
+    # 1. Humanize the Risk
     if proba_percent < 30:
-        plan["summary"] = "Your results indicate a low risk profile currently. However, maintaining a healthy lifestyle is crucial."
+        plan["summary"] = "Low Risk Profile"
+    elif proba_percent < 50:
+        plan["summary"] = "Moderate Risk - Monitor Closely"
     elif proba_percent < 70:
-        plan["summary"] = "Your results indicate an elevated risk. It is advisable to address specific lifestyle factors."
+        plan["summary"] = "Borderline High - Action Required"
     else:
-        plan["summary"] = "Your results indicate a high risk profile. Immediate consultation with a healthcare professional is strongly recommended."
+        plan["summary"] = "High Risk - Clinical Attention Recommended"
 
-    # 2. Identify heavy hitters from SHAP
-    # feature names are EXPECTED_FEATURES.
-    # We want features that pushed risk UP (positive shap).
-    
-    # Map feature index to name
+    # 2. Identify top contributing factors from SHAP
     feat_map = {i: n for i, n in enumerate(EXPECTED_FEATURES)}
     
-    # Sort by impact (highest positive first)
-    # shap_values is typically (1, n_features) or (n_features,)
-    if len(shap_values.shape) == 2:
+    # Check shape of shap_values
+    if isinstance(shap_values, list):
+         vals = shap_values[0]
+    elif hasattr(shap_values, 'shape') and len(shap_values.shape) == 2:
         vals = shap_values[0]
     else:
         vals = shap_values
         
-    # Zip and sort
     impacts = []
     for i, val in enumerate(vals):
         impacts.append((feat_map[i], val))
     
+    # Sort by impact (highest positive first = increased risk)
     impacts.sort(key=lambda x: x[1], reverse=True)
     
-    # Top 3 'bad' factors
-    top_risks = [x for x in impacts if x[1] > 0][:3]
+    # 3. Rich Explanations Dictionary (Why & How)
+    EXPLANATIONS = {
+        "Pima_Glucose": {
+            "why": "Blood Sugar Level",
+            "how": "Elevated fasting glucose indicates your body is struggling to process sugar, a direct marker of diabetes risk."
+        },
+        "Pima_BloodPressure": {
+            "why": "Cardiovascular Strain",
+            "how": "Higher diastolic pressure suggests your heart is working harder between beats, often linked to insulin resistance."
+        },
+        "Pima_Insulin": {
+            "why": "Insulin Resistance",
+            "how": "High insulin levels often mean your body is producing more to compensate for cells not responding, a precursor to burnout."
+        },
+        "Pima_SkinThickness": {
+             "why": "Body Fat Distribution",
+             "how": "Triceps skinfold thickness estimates subcutaneous body fat, which correlates with overall metabolic health."
+        },
+        "Pima_DiabetesPedigreeFunction": {
+             "why": "Genetic Predisposition",
+             "how": "A higher score indicates a strong family history, meaning your genetic baseline risk is elevated."
+        },
+        "Pima_Pregnancies": {
+             "why": "Gestational Stress",
+             "how": "Multiple pregnancies can place repeated metabolic stress on the body, sometimes unmasking latent insulin issues."
+        },
+        "CDC_HighBP": {
+            "why": "Systemic Strain",
+            "how": "Chronic high blood pressure damages blood vessels, forcing the heart to work harder and increasing the risk of metabolic complications."
+        },
+        "CDC_HighChol": {
+            "why": "Arterial Plaque Build-up",
+            "how": "Elevated cholesterol leads to plaque accumulation in arteries, restricting blood flow and raising cardiovascular and diabetes risk."
+        },
+        "BMI": {
+            "why": "Adipose Tissue Impact",
+            "how": "Higher body mass, particularly visceral fat, promotes inflammation and insulin resistance, the core drivers of Type 2 diabetes."
+        },
+        "CDC_Smoker": {
+            "why": "Oxidative Stress",
+            "how": "Smoking introduces toxins that damage cells, causing oxidative stress and directly impairing insulin sensitivity."
+        },
+        "CDC_PhysActivity": {
+            "why": "Sedentary Lifestyle",
+            "how": "Lack of regular muscle engagement reduces glucose uptake from the blood, leading to higher sustained blood sugar levels."
+        },
+        "CDC_Fruits": {
+            "why": "Micronutrient Deficiency",
+            "how": "A diet low in whole fruits lacks essential fiber and antioxidants that help regulate blood sugar absorption."
+        },
+        "CDC_Veggies": {
+            "why": "Low Dietary Fiber",
+            "how": "Vegetables are a primary source of fiber, which slows digestion and prevents blood sugar spikes."
+        },
+        "CDC_HvyAlcoholConsump": {
+            "why": "Liver Stress",
+            "how": "Excessive alcohol consumption places strain on the liver, disrupting its ability to regulate blood glucose effectively."
+        },
+        "CDC_GenHlth": {
+            "why": "Overall Health Status",
+            "how": "Your self-reported poor health often correlates with underlying undiagnosed inflammation or chronic stress."
+        },
+        "CDC_MentHlth": {
+            "why": "Psychological Stress",
+            "how": "Frequent mental distress can elevate cortisol levels, a hormone that naturally increases blood sugar."
+        },
+        "CDC_PhysHlth": {
+            "why": "Physical Limitation",
+            "how": "Frequent physical illness limits your ability to maintain an active, calorie-burning lifestyle."
+        },
+        "CDC_DiffWalk": {
+            "why": "Mobility Restriction",
+            "how": "Difficulty walking severely limits physical activity options, contributing to weight gain and muscle atrophy."
+        },
+        "CDC_Sex": {
+            "why": "Biological Factors",
+            "how": "Biological differences can influence fat distribution and hormonal baselines affecting risk calculation."
+        },
+        "Age": {
+            "why": "Metabolic Aging",
+            "how": "As we age, pancreatic function naturally declines and cells become more resistant to insulin."
+        },
+        "CDC_Education": {
+            "why": "Socioeconomic Correlation",
+            "how": "Statistical models often find correlations between education levels and access to healthcare or health literacy."
+        },
+         "CDC_HeartDiseaseorAttack": {
+            "why": "Comorbidity",
+            "how": "Prior cardiovascular events indicate an existing compromise in vascular health, which is closely linked to diabetes pathology."
+        },
+        "CDC_Stroke": {
+            "why": "Vascular History",
+            "how": "A history of stroke suggests significant vascular risk factors are already present."
+        },
+         "CDC_CholCheck": {
+            "why": "Preventative Gap",
+            "how": "Irregular cholesterol screening may mean missed opportunities to manage lipid levels early."
+        }
+    }
+    
+    ACTIONABLE = [
+        "BMI", "CDC_Smoker", "CDC_PhysActivity", "CDC_Fruits", "CDC_Veggies", 
+        "CDC_HvyAlcoholConsump", "CDC_HighBP", "CDC_HighChol", "Pima_Glucose", "Pima_BloodPressure", "Pima_Insulin"
+    ]
+    
+    # 4. Build Action Plan (Modifiable only)
+    top_risks = [x for x in impacts if x[1] > 0]
     
     for feat, score in top_risks:
-        val = row_dict.get(feat, "?")
-        if feat == "Glucose":
-            msg = f"Your Glucose level ({val} mg/dL) is a primary contributor."
-            action = "Reduce refined sugars and carbohydrates. Monitor fasting sugar regularly."
-        elif feat == "BMI":
-            msg = f"Your BMI ({val}) contributes to the risk."
-            action = "Aim for a gradual weight loss of 5-10% through diet and moderate exercise."
-        elif feat == "Age":
-            msg = f"Age ({val}) is a natural risk factor."
-            action = "Regular screenings are essential as we age. Focus on what you can control: diet and activity."
-        elif feat == "BloodPressure":
-            msg = f"Blood Pressure ({val} mmHg) is influencing the score."
-            action = "Monitor BP. Reduce salt intake and manage stress."
-        elif feat == "Insulin":
-            msg = "Insulin levels contributed to the prediction."
-            action = "Discuss Insulin resistance with your endocrinologist."
-        elif feat == "DiabetesPedigreeFunction":
-            msg = "Family history increases genetic predisposition."
-            action = "Since genetics are fixed, be extra vigilant with lifestyle choices."
-        else:
-            msg = f"{feat} ({val}) is a contributing factor."
-            action = "Discuss this specific metric with your doctor."
+        val = row_dict.get(feat, 0)
+        action_text = None
         
-        plan["key_factors"].append({"factor": msg, "action": action})
+        # Skip if not actionable
+        if feat not in ACTIONABLE:
+            continue
+            
+        if feat == "CDC_HighBP" and val == 1:
+            action_text = "• Blood Pressure: Management is critical. A DASH diet (low sodium) and stress reduction are proven first-line defenses."
+        elif feat == "CDC_HighChol" and val == 1:
+            action_text = "• Cholesterol: Swap saturated fats (red meat, butter) for healthy fats (nuts, olive oil) to improve lipid profiles."
+        elif feat == "BMI":
+            if val > 25:
+                 action_text = f"• Weight: Your BMI is {val}. Even a modest 5% weight loss improves insulin sensitivity dramatically."
+        elif feat == "CDC_Smoker" and val == 1:
+            action_text = "• Smoking: Quitting is the most effective way to restore your body's cardiovascular resilience."
+        elif feat == "CDC_PhysActivity" and val == 0:
+            action_text = "• Activity: Aim for 150 mins/week of brisk walking. Muscles are the main consumers of blood sugar."
+        elif feat == "CDC_Fruits" and val == 0:
+            action_text = "• Nutrition: Add one serving of whole fruit (berries, apple) to your daily routine for fiber."
+        elif feat == "CDC_Veggies" and val == 0:
+             action_text = "• Nutrition: Aim to fill half your plate with non-starchy vegetables at every meal."
+        elif feat == "CDC_HvyAlcoholConsump" and val == 1:
+            action_text = "• Alcohol: Reducing intake relieves metabolic stress on the liver."
+        elif feat == "Pima_Glucose" and val > 140:
+             action_text = f"• Blood Sugar: Your glucose ({val}) is elevated. Consult your doctor for an A1C test."
+        elif feat == "Pima_Insulin" and val > 160:
+             action_text = "• Insulin: High insulin suggests resistance. Intermittent fasting or carb reduction can help sensitive cells."
 
-    if not plan["key_factors"]:
-        plan["key_factors"].append({"factor": "No single factor stands out.", "action": "Maintain balanced habits."})
+        if action_text:
+            plan["actions"].append(action_text)
+            
+    plan["actions"] = plan["actions"][:4]
+    if not plan["actions"]:
+        plan["actions"].append("Prioritize maintaining your current healthy preventive habits.")
+
+    # 5. Key Factors Analysis (The Why & How)
+    # Mention top features regardless of modifiability, but exclude Income
+    for feat, score in top_risks[:5]: # Check top 5 to ensure we get 4 after filtering
+        # Skip Income - don't show it in the UI
+        if feat == "Income":
+            continue
+            
+        val = row_dict.get(feat, "?")
+        exp = EXPLANATIONS.get(feat, {"why": "Risk Factor", "how": "This factor statistically increases the probability of a diagnosis."})
+        
+        label_class = "Modifiable" if feat in ACTIONABLE else "Non-Modifiable"
+        
+        plan["key_factors"].append({
+            "factor": feat,
+            "value": val,
+            "label": label_class,
+            "why": exp["why"],
+            "how": exp["how"]
+        })
+        
+        # Stop once we have 4 factors (excluding Income)
+        if len(plan["key_factors"]) >= 4:
+            break
 
     return plan
 
+# Remove DiCE function logic (Stub)
+def generate_dice_bcf(*args, **kwargs):
+    return []
+
+def generate_anchor_rule(model, X_raw, X_train_numpy, feature_names=EXPECTED_FEATURES, class_names=["Healthy", "Diabetic"]):
+    """
+    Generate Anchors rule. Safe against shape mismatches.
+    """
+    try:
+        if AnchorTabular is None:
+             return ["Anchors library not installed."]
+
+        # Ensure X_train_numpy matches feature_names shape
+        # expecting (n_samples, n_features)
+        if len(X_train_numpy.shape) == 2:
+            cols_in_train = X_train_numpy.shape[1]
+            if cols_in_train > len(feature_names):
+                # Assume target is included (likely last or similar), but safest to trust features if columns known
+                # But X_train_numpy is often just array. 
+                # If it's 22 vs 21, likely last column is target.
+                X_train_clean = X_train_numpy[:, :len(feature_names)]
+            else:
+                X_train_clean = X_train_numpy
+        else:
+             X_train_clean = X_train_numpy
+
+        predict_fn = lambda x: model.predict(x)
+        explainer = AnchorTabular(predict_fn, feature_names)
+        explainer.fit(X_train_clean)
+        
+        instance = X_raw.values[0]
+        # ensure instance shape
+        explanation = explainer.explain(instance, threshold=0.95)
+        
+        return explanation.anchor
+    except Exception as e:
+        print(f"Anchors Error: {e}")
+        return ["Could not generate rule."]
+
 def generate_shap_plot(model, scaler, X_raw, feature_names=EXPECTED_FEATURES):
     """
-    model: trained sklearn-like model (trained on scaled inputs)
-    scaler: fitted scaler (StandardScaler)
-    X_raw: 2D numpy array or DataFrame with original raw feature values (1 x n_features)
-    returns: relative path to saved PNG (e.g., static/shap_images/...)
+    Generate SHAP summary plot for a single instance.
     """
-    # Convert X_raw to numpy 2D
-    if isinstance(X_raw, pd.DataFrame):
-        X_raw_vals = X_raw.values
-    else:
-        X_raw_vals = np.array(X_raw)
-    # Scale (model trained on scaled)
-    X_scaled = scaler.transform(X_raw_vals)
-    # Use TreeExplainer on model
     try:
+        # 1. Scale input
+        if isinstance(X_raw, pd.DataFrame):
+            X_vals = X_raw.values
+        else:
+            X_vals = np.array(X_raw)
+        
+        X_scaled = scaler.transform(X_vals)
+        
+        # 2. Create Explainer (TreeExplainer for XGBoost)
+        # Note: In production, you might want to load a pre-computed explainer
         explainer = shap.TreeExplainer(model)
-        shap_vals = explainer.shap_values(X_scaled)
-    except Exception:
-        # Fallback newer API
-        explainer = shap.TreeExplainer(model)
-        shap_exp = explainer(X_scaled)
-        shap_vals = shap_exp.values
+        
+        # 3. Get Shap Values
+        shap_values = explainer.shap_values(X_scaled)
+        
+        # Handle different SHAP output formats (list for multiclass, array for binary)
+        if isinstance(shap_values, list):
+             vals = shap_values[0]
+             if len(shap_values) > 1:
+                 # IF binary, index 1 is usually the positive class
+                 vals = shap_values[1]
+        else:
+             vals = shap_values
 
-    # Convert to array of shape (n_samples, n_features)
-    shap_arr = np.array(shap_vals)
-    # For single sample:
-    idx = 0
-    vals = shap_arr[idx]
-    abs_vals = np.abs(vals)
-    order = np.argsort(abs_vals)[::-1]
-    top_n = min(len(feature_names), 8)
-    top_idx = order[:top_n]
-    top_feats = [feature_names[i] for i in top_idx]
-    top_vals = vals[top_idx]
+        # 4. Filter top features for plotting
+        if len(vals.shape) == 2:
+            vals = vals[0]
+            
+        df_shap = pd.DataFrame({
+            'feature': feature_names,
+            'shap_value': vals
+        })
+        # Add absolute value for sorting
+        df_shap['abs_val'] = df_shap['shap_value'].abs()
+        df_shap = df_shap.sort_values('abs_val', ascending=False).head(10)
+        
+        # 5. Plot
+        plt.figure(figsize=(8, 5))
+        # Horizontal bar chart
+        # Color: Red for positive (risk), Blue for negative (protective)
+        colors = ['#ff4d4d' if x > 0 else '#2ecc71' for x in df_shap['shap_value']]
+        
+        plt.barh(df_shap['feature'], df_shap['shap_value'], color=colors)
+        plt.xlabel("SHAP Value (Impact on Model Output)")
+        plt.title("Feature Impact for this Patient")
+        plt.axvline(x=0, color='black', linestyle='--', linewidth=0.8)
+        plt.gca().invert_yaxis() # Highest impact on top
+        plt.tight_layout()
+        
+        fname = f"shap_{int(time.time()*1000)}.png"
+        rel_path = os.path.join("static", "shap_images", fname)
+        plt.savefig(rel_path, bbox_inches="tight")
+        plt.close()
+        
+        return f"static/shap_images/{fname}"
+        
+    except Exception as e:
+        print(f"SHAP Error: {e}")
+        import traceback
+        traceback.print_exc()
+        return ""
 
-    plt.figure(figsize=(6,4))
-    # horizontal bar with sign
-    y_pos = range(len(top_feats))
-    plt.barh(list(reversed(top_feats)), list(reversed(top_vals)))
-    plt.xlabel("SHAP value (impact on model output)")
-    plt.title("SHAP - Top feature impacts")
-    plt.tight_layout()
-
-    fname = f"shap_{int(time.time()*1000)}.png"
-    rel_path = os.path.join("static", "shap_images", fname)
-    plt.savefig(rel_path, bbox_inches="tight")
-    plt.close()
-    return rel_path.replace("\\", "/")
 
 def generate_lime_plot(model, scaler, X_raw, training_df_raw, feature_names=EXPECTED_FEATURES, class_names=["NotDiabetic","Diabetic"]):
     """
-    model: trained model
-    scaler: fitted scaler
-    X_raw: single-row DataFrame or 2D-array in raw units
-    training_df_raw: DataFrame of raw training samples (unscaled) to build the LIME explainer
-    returns: relative path to saved PNG (e.g., static/lime_images/...)
+    Generate LIME output. Safe against target column presence.
     """
-    # Prepare training data for explainer (LIME expects raw data if our predict_fn accepts raw)
-    train_np = np.array(training_df_raw[feature_names].values)
+    try:
+        # Fix: Ensure training data only has expected features
+        # Select only the features we need
+        train_filtered = training_df_raw[feature_names].copy()
+        train_np = train_filtered.values
+    except Exception as e:
+        print(f"LIME Data Prep Error: {e}")
+        return ""
 
-    # define prediction function that accepts raw numpy array (n_samples x n_features)
+    # define prediction function
     def predict_fn(raw_array):
         # raw_array -> scale -> model.predict_proba
         scaled = scaler.transform(raw_array)
         probs = model.predict_proba(scaled)
         return probs
 
-    explainer = LimeTabularExplainer(
-        training_data=train_np,
-        feature_names=feature_names,
-        class_names=class_names,
-        mode="classification",
-        discretize_continuous=True
-    )
+    try:
+        if LimeTabularExplainer is None:
+            print("LIME not installed.")
+            return ""
 
-    # X_raw as 1D array for explain_instance
-    if isinstance(X_raw, pd.DataFrame):
-        instance = X_raw.iloc[0].values
-    else:
-        instance = np.array(X_raw).reshape(-1)
-
-    exp = explainer.explain_instance(instance, predict_fn, num_features=min(8, len(feature_names)))
-
-    # Plot LIME explanation as horizontal bar
-    # exp.as_list() returns list of (feature, contribution)
-    feature_contribs = exp.as_list()
-    feats = [f for f, _ in feature_contribs]
-    vals = [v for _, v in feature_contribs]
-
-    # Build bar plot
-    plt.figure(figsize=(6,4))
-    # LIME values can be positive/negative; horizontal bar
-    plt.barh(list(reversed(feats)), list(reversed(vals)))
-    plt.xlabel("LIME feature contribution (to predicted class)")
-    plt.title("LIME - Local explanation")
-    plt.tight_layout()
-
-    fname = f"lime_{int(time.time()*1000)}.png"
-    rel_path = os.path.join("static", "lime_images", fname)
-    plt.savefig(rel_path, bbox_inches="tight")
-    plt.close()
-    return rel_path.replace("\\", "/")
+        explainer = LimeTabularExplainer(
+            training_data=train_np,
+            feature_names=feature_names,
+            class_names=class_names,
+            mode="classification",
+            discretize_continuous=True
+        )
+        
+        # Get instance as numpy array (1D)
+        # Handle X_raw whether it is DataFrame or numpy array
+        if isinstance(X_raw, pd.DataFrame):
+            instance = X_raw.iloc[0].values
+        else:
+             instance = np.array(X_raw).reshape(-1)
+        
+        exp = explainer.explain_instance(
+            data_row=instance,
+            predict_fn=predict_fn,
+            num_features=min(8, len(feature_names))
+        )
+        
+        # Save plot
+        fname = f"lime_exp_{np.random.randint(10000)}.png"
+        save_path = os.path.join("static", "lime_images", fname)
+        
+        # LIME plot to file
+        fig = exp.as_pyplot_figure()
+        plt.tight_layout()
+        fig.savefig(save_path)
+        plt.close(fig)
+        
+        return f"static/lime_images/{fname}"
+    except Exception as e:
+        print(f"LIME Generation Error: {e}")
+        return ""
 
 
 # ===== Dataset Analysis Functions =====
@@ -322,8 +557,11 @@ def generate_feature_importance_plot(feature_importance, top_n=8):
     Returns relative path to saved image.
     """
     try:
-        # Take top N features
-        top_features = feature_importance[:top_n]
+        # Filter out Income from the list
+        filtered_importance = [f for f in feature_importance if f['feature'] != 'Income']
+        
+        # Take top N features from filtered list
+        top_features = filtered_importance[:top_n]
         features = [f['feature'] for f in top_features]
         importances = [f['importance'] for f in top_features]
         

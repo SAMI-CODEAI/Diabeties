@@ -1,0 +1,66 @@
+================================================================================
+MATCHED DATASET COMBINATION REPORT
+Generated: 2026-02-05 19:08:38
+================================================================================
+
+--------------------------------------------------------------------------------
+MATCHING STRATEGY
+--------------------------------------------------------------------------------
+
+Approach: Each CDC row matched to most similar Pima row
+Matching features: BMI and Age (normalized)
+CDC Age converted from categories to approximate years
+
+--------------------------------------------------------------------------------
+SOURCE DATASETS
+--------------------------------------------------------------------------------
+
+Pima Indian Diabetes Dataset: 768 rows
+CDC BRFSS 2015 Dataset: 253,680 rows
+
+--------------------------------------------------------------------------------
+COMBINED DATASET
+--------------------------------------------------------------------------------
+
+Total rows: 150,000
+Total columns: 31
+
+Feature breakdown:
+  - Pima clinical features: 6
+  - CDC lifestyle features: 19
+  - Common features: 4 (BMI, Age, CDC_BMI, CDC_Age_Category)
+  - Target variable: 1 (Diabetes)
+  - Metadata: 1 (Match_Quality_Score)
+
+Target Distribution:
+  0: 104,529 (69.69%)
+  1: 45,471 (30.31%)
+
+--------------------------------------------------------------------------------
+FEATURE STATISTICS
+--------------------------------------------------------------------------------
+
+BMI Statistics:
+  Mean: 28.33
+  Std: 6.00
+  Range: 18.2 - 67.1
+
+Age Statistics:
+  Mean: 56.63
+  Std: 15.04
+  Range: 21 - 81
+
+--------------------------------------------------------------------------------
+DATA QUALITY
+--------------------------------------------------------------------------------
+
+Total missing values: 0
+[OK] No missing values - all rows have complete features!
+
+================================================================================
+DATASET READY FOR MODEL TRAINING
+================================================================================
+
+This dataset combines clinical and lifestyle features
+for 150,000 records, suitable for training
+professional-grade machine learning models.
